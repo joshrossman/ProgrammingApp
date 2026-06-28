@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Roboto', sans-serif; margin: 0; padding: 12px 8px; background-color: #f4f6f9; color: #202124; }
+    #app-wrapper { max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 8px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); position: relative; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; }
+    .header h2 { margin: 0; font-family: 'Google Sans', sans-serif; font-size: 16px; color: #1a73e8; }
+    .header-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .btn { background-color: #1a73e8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; font-family: 'Google Sans', sans-serif;}
+    .btn:hover { background-color: #1557b0; }
+    .btn-secondary { background-color: #f1f3f4; color: #202124; border: 1px solid #dadce0; padding: 4px 8px; }
+    .btn-secondary:hover { background-color: #e8eaed; }
+    .btn-danger { background-color: #faf0f0; color: #d93025; border: 1px solid #fad2d2; }
+    .btn-danger:hover { background-color: #fce8e6; }
+    
+    #list-container { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+ 
+    .event-card { display: flex; flex-direction: column; width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; background-color: #ffffff; transition: border 0.2s, box-shadow 0.2s; }
+    .event-card.is-open { border: 1px solid #1a73e8; box-shadow: 0 1px 6px rgba(26,115,232,0.1); }
+    .event-card.dragging { opacity: 0.5; }
+    
+    .event-title { padding: 6px 10px; font-weight: 500; font-family: 'Google Sans', sans-serif; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #202124; background-color: #f8f9fa; border-bottom: 1px solid #e2e8f0; }
+    .event-title:hover { background-color: #f1f3f4; }
+    .drag-handle { cursor: grab; margin-right: 8px; color: #bdc1c6; font-size: 13px; }
+    .drag-handle:active { cursor: grabbing; }
+    
+    .event-title-left { display: flex; align-items: center; flex-grow: 1; }
+    .event-title-right { display: flex; align-items: center; gap: 10px; }
+    .event-header-date-widget { background: #e8eaed; border: 1px solid transparent; border-radius: 10px; padding: 2px 8px; font-size: 11px; color: #1a73e8; font-weight: 500; cursor: pointer; outline: none; width: 130px; text-align: center; font-family: 'Roboto', sans-serif; transition: background 0.2s; }
+    .event-header-date-widget:hover { background: #d2e3fc; }
+    
+    .event-delete-btn { color: #5f6368; cursor: pointer; font-size: 12px; padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .event-delete-btn:hover { background-color: #fce8e6; color: #d93025; }
+ 
+    .event-details { display: flex; flex-direction: column; width: 100%; padding: 4px 6px; box-sizing: border-box; border-top: 1px solid #e2e8f0; }
+    .tasks-box { display: flex; flex-direction: column; width: 100%; }
+ 
+    .task-item { display: flex; align-items: flex-start; padding: 3px 4px; position: relative; border-bottom: 1px solid #f8f9fa; }
+    .task-item:hover { background-color: #f8f9fa; border-radius: 4px; }
+    
+    .task-checkbox { padding-top: 1px; width: 22px; flex-shrink: 0; color: #5f6368; cursor: pointer; font-size: 15px; display: flex; justify-content: center; }
+    .task-checkbox:hover { color: #202124; }
+    
+    .task-content { flex-grow: 1; padding-left: 4px; display: flex; flex-direction: column; gap: 1px; }
+    .task-input-container { display: flex; align-items: center; justify-content: flex-start; gap: 4px; width: 100%; flex-wrap: wrap; }
+ 
+    .inline-edit { border: 1px solid transparent; outline: none; background: transparent; font-family: 'Roboto', sans-serif; width: 100%; border-radius: 4px; padding: 1px 4px; margin-left: -4px; transition: border 0.2s, background 0.2s;}
+    .inline-edit:focus { background: #fff; border: 1px solid #1a73e8; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    
+    .task-title-input { font-size: 13px; color: #202124; font-weight: 500; resize: none; overflow: hidden; line-height: 1.2; min-height: 16px; padding-top: 0px; }
+    .completed-text { text-decoration: line-through; color: #5f6368; }
+    .task-meta-input { font-size: 11px; color: #5f6368; }
+ 
+    .subtask-container { margin-top: 2px; margin-left: 8px; border-left: 2px solid #e2e8f0; padding-left: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .subtask-item { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; position: relative; padding: 1px 0; }
+    .subtask-left { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex-grow: 1; }
+    .subtask-checkbox { color: #5f6368; cursor: pointer; font-size: 12px; display: flex; align-items: center; }
+    
+    .subtask-delete-btn { opacity: 0; color: #5f6368; cursor: pointer; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 10px; transition: opacity 0.15s; margin-left: 4px; }
+    .subtask-item:hover .subtask-delete-btn { opacity: 1; }
+    .subtask-delete-btn:hover { background-color: #fce8e6; color: #d93025; }
+ 
+    .clean-date-input { font-family: 'Roboto', sans-serif; font-size: 10px; font-weight: 500; color: #3c4043; background-color: #f1f3f4; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1px 6px; cursor: pointer; outline: none; flex-shrink: 0; }
+    .clean-date-input:hover { background-color: #e8eaed; }
+    .clean-date-input.no-date { color: #5f6368; background-color: #ffffff; }
+    .clean-date-input.due-week { color: #b06000; border-color: #ffeccf; background-color: #ffeccf; }
+    .clean-date-input.due-imminent { color: #d93025; border-color: #fce8e6; background-color: #fce8e6; }
+    .clean-date-input.matrix-overdue { color: #a50202; border-color: #f9d2d2; background-color: #f9d2d2; font-weight: bold !important; }
+    
+    .task-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; padding-right: 4px; align-items: center; flex-shrink: 0; margin-left: auto; }
+    .task-item:hover .task-actions { opacity: 1; }
+    .action-btn { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #5f6368; font-size: 11px; }
+    .action-btn:hover { background-color: #e8eaed; color: #202124; }
+    .action-btn.delete-btn:hover { background-color: #fce8e6; color: #d93025; }
+ 
+    .add-task-box { display: flex; align-items: flex-start; padding: 4px; background-color: #f8f9fa; border-radius: 6px; margin-top: 4px; border: 1px dashed #cbd5e1; }
+    .add-task-inputs { flex-grow: 1; padding-left: 4px; display: flex; flex-direction: column; gap: 2px; }
+    .borderless-input { border: none; outline: none; background: transparent; font-family: 'Roboto', sans-serif; font-size: 13px; color: #202124; width: 100%; }
+    .borderless-input::placeholder { color: #5f6368; }
+    
+    .loader { text-align: center; color: #5f6368; font-size: 13px; padding: 40px 0; }
+    .blocking-load-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; }
+    .blocking-load-overlay i { color: #1a73e8; font-size: 28px; margin-bottom: 10px; }
+    .blocking-load-overlay span { font-weight: 500; font-family: 'Google Sans'; color: #202124; font-size: 14px; }
+ 
+    .location-wrapper { display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; width: 100%; max-width: 360px; gap: 6px; box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .location-meta-row { display: flex; align-items: center; gap: 8px; width: 100%; border-top: 1px dashed #e2e8f0; padding-top: 6px; margin-top: 2px; }
+    .time-widget-group { display: flex; align-items: center; gap: 4px; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; border: 1px solid #dadce0; flex: 1; }
+    .time-widget-group label { font-size: 10px; font-weight: 500; text-transform: uppercase; white-space: nowrap; }
+    .time-widget-group input[type="time"] { font-size: 11px; border: none; background: transparent; outline: none; color: #202124; cursor: pointer; width: 100%; }
+    .periods-cluster { display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+    .period-pill-container { display: flex; gap: 3px; flex-wrap: wrap; }
+ 
+    .template-item-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #e2e8f0; background: #f8f9fa; border-radius: 6px; margin-bottom: 8px; }
+    .template-card-title { font-family: 'Google Sans', sans-serif; font-size: 14px; font-weight: 500; color: #202124; }
+    .template-card-meta { font-size: 12px; color: #5f6368; margin-top: 2px; }
+ 
+    .multiselect-dropdown { position: relative; display: inline-block; width: 140px; font-family: 'Roboto', sans-serif; }
+    .multiselect-badge-box { border: 1px solid transparent; border-radius: 4px; padding: 1px 4px; background: transparent; font-size: 11px; color: #5f6368; cursor: pointer; display: flex; align-items: center; gap: 4px; justify-content: space-between; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .multiselect-badge-box:hover { border: 1px solid #cbd5e1; background: #fff; }
+    .multiselect-menu { display: none; position: absolute; top: 100%; left: 0; background: #ffffff; border: 1px solid #dadce0; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); padding: 4px 0; z-index: 1000; min-width: 160px; max-height: 180px; overflow-y: auto; }
+    .multiselect-menu label { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12px; color: #202124; cursor: pointer; }
+    .multiselect-menu label:hover { background-color: #f1f3f4; }
+
+    .completed-section-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 5px 6px; border-radius: 4px; user-select: none; color: #5f6368; font-size: 12px; font-weight: 500; width: fit-content; transition: background 0.15s; }
+    .completed-section-toggle:hover { background: #f1f3f4; }
+    .completed-tasks-wrapper { margin-top: 2px; margin-left: 6px; border-left: 2px solid #ceead6; padding-left: 8px; opacity: 0.82; }
+
+    /* Task link indicator */
+    .task-link-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #1a73e8; background: #e8f0fe; border: 1px solid #d2e3fc; border-radius: 10px; padding: 1px 7px; cursor: pointer; text-decoration: none; flex-shrink: 0; }
+    .task-link-badge:hover { background: #d2e3fc; }
+    .link-edit-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; padding: 4px 6px; background: #f8f9fa; border-radius: 4px; border: 1px solid #e2e8f0; }
+    .link-edit-row input { flex-grow: 1; font-size: 12px; border: none; outline: none; background: transparent; color: #202124; }
+
+    /* Template subtask add button hover */
+    .tmpl-add-subtask-btn:hover { background: #e8f0fe !important; }
+    /* Auto-expand textareas on render */
+    textarea.inline-edit { overflow: hidden; resize: none; }
+  </style>
+</head>
+<body>
+ 
+  <div id="app-wrapper">
+    <div id="app">
+      <div class="loader"><i class="fas fa-circle-notch fa-spin"></i> Loading Matrix Dashboard...</div>
+    </div>
+  </div>
+ 
+  <script>
+    let state = { events: {}, tasks: {}, expandedEvents: {}, eventOrder: [], templates: {}, globalQuickTasks: [], links: [] };
+    let draggedId = null;
+    let currentFilter = 'all'; 
+    let focusAfterRender = null; 
+    let showCompletedTasks = {};
+
+    var selectedAssigneeFilters = []; 
+    var isAssigneeFilterMenuOpen = false;
+    var currentEventTypeView = 'programming';
+    var searchQuery = '';           // current search string
+    var searchResultsMode = false;  // true when showing search results
+    var personalUnlocked = false;
+    var showingPersonalPrompt = false;
+    var pendingViewType = null;
+    var PERSONAL_PASSWORD = "Jarb1616";
+
+    function toggleEventTypeView(type) {
+      // Both "all" and "personal" expose personal events, so require password
+      if ((type === 'personal' || type === 'all') && !personalUnlocked) {
+        pendingViewType = type;
+        showingPersonalPrompt = true;
+        renderApp();
+        return;
+      }
+      showingPersonalPrompt = false;
+      pendingViewType = null;
+      currentEventTypeView = type;
+      renderApp();
+    }
+
+    function submitPersonalPassword() {
+      var pwd = document.getElementById('personal-pwd-input').value;
+      if (pwd === PERSONAL_PASSWORD) {
+        personalUnlocked = true;
+        showingPersonalPrompt = false;
+        currentEventTypeView = pendingViewType || 'personal';
+        pendingViewType = null;
+        renderApp();
+      } else {
+        document.getElementById('personal-pwd-error').style.display = 'block';
+        document.getElementById('personal-pwd-input').value = '';
+        document.getElementById('personal-pwd-input').focus();
+      }
+    }
+
+    function cancelPersonalPassword() {
+      showingPersonalPrompt = false;
+      pendingViewType = null;
+      renderApp();
+    }
+ 
+    var JOSH_EMAIL = 'josh.rossman@yavnehacademy.org';
+
+    function _autoAssignJosh(eventId) {
+      // For academic and personal categories, auto-assign Josh to tasks with no assignee
+      var tasks = state.tasks[eventId] || {};
+      var changed = false;
+      Object.keys(tasks).forEach(function(tid) {
+        var task = tasks[tid];
+        if (!task.assignee || task.assignee.trim() === '') {
+          task.assignee = JOSH_EMAIL;
+          changed = true;
+          if (typeof google !== 'undefined')
+            google.script.run.updateTaskFieldAsync(eventId, tid, 'assignee', JOSH_EMAIL);
+        }
+      });
+      return changed;
+    }
+
+    function updateEventType(eventId, type) {
+      if (state.events[eventId]) {
+        state.events[eventId].eventType = type;
+        if (type === 'academic' || type === 'personal') {
+          _autoAssignJosh(eventId);
+        }
+        renderApp(); 
+        google.script.run
+          .withFailureHandler(function(error) { console.error("Failed to save event type: ", error); })
+          .updateEventTypeAsync(eventId, type); 
+      }
+    }
+
+    function toggleCompletedSection(eventId) {
+      showCompletedTasks[eventId] = !showCompletedTasks[eventId];
+      renderApp();
+    }
+
+    function toggleAssigneeFilterMenu(event) {
+      if (event) event.stopPropagation();
+      isAssigneeFilterMenuOpen = !isAssigneeFilterMenuOpen;
+      renderApp();
+    }
+ 
+    function toggleSingleAssigneeFilter(person) {
+      if (selectedAssigneeFilters.includes(person)) {
+        selectedAssigneeFilters = selectedAssigneeFilters.filter(p => p !== person);
+      } else {
+        selectedAssigneeFilters.push(person);
+      }
+      renderApp();
+    }
+ 
+    function clearAssigneeFilters() {
+      selectedAssigneeFilters = [];
+      renderApp();
+    }
+ 
+    document.addEventListener('click', function(event) {
+      if (isAssigneeFilterMenuOpen && !event.target.closest('.custom-multiselect')) {
+        isAssigneeFilterMenuOpen = false;
+        renderApp();
+      }
+    });
+ 
+    const LOCATIONS = [
+      'Maker Space', 'MSG', 'LSG', 'Cafeteria', 'BM', 'Outdoor Fields', 'Outdoor Basketball Fields', 
+      '500', '501', '502', '503', '504', '405', '407', '600', '601', '602', '604', '605'
+    ];
+ 
+    const TEAM_MEMBERS = [
+      { email: 'josh.rossman@yavnehacademy.org', label: 'Josh' },
+      { email: 'shoshana.kattan@yavnehacademy.org', label: 'Shoshana' },
+      { email: 'russi.shor@yavnehacademy.org', label: 'Russi' }
+    ];
+ 
+    const DEFAULT_QUICK_TASKS = [
+      "Confirm Date With Admin", "Email Setups to Judy", "Email Date/Location To Judy", 
+      "Send writeup to Debby", "Buy supplies", "Send Email To Teachers"
+    ];
+ 
+    window.onload = function() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(data => { 
+          state = data; 
+          if (!state.templates) state.templates = {}; 
+          if (!state.globalQuickTasks || state.globalQuickTasks.length === 0) state.globalQuickTasks = [...DEFAULT_QUICK_TASKS];
+          if (!state.links) state.links = [];
+          sortEventsChronologically();
+          renderApp(); 
+        }).getInitialData();
+      } else {
+        if (!state.globalQuickTasks) state.globalQuickTasks = [...DEFAULT_QUICK_TASKS];
+        if (!state.links) state.links = [];
+        sortEventsChronologically();
+        renderApp();
+      }
+    };
+ 
+    function sortEventsChronologically() {
+      let currentKeys = Object.keys(state.events || {});
+      currentKeys.sort((a, b) => {
+        let dateA = getSafeDate(state.events[a].date);
+        let dateB = getSafeDate(state.events[b].date);
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1; 
+        if (!dateB) return -1;
+        return dateA.getTime() - dateB.getTime();
+      });
+      state.eventOrder = currentKeys;
+    }
+ 
+    function showBlockingLoader(msg) {
+      removeBlockingLoader();
+      let loader = document.createElement('div');
+      loader.id = "blocking-matrix-loader";
+      loader.className = "blocking-load-overlay";
+      loader.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i><span>${msg}</span>`;
+      document.getElementById('app-wrapper').appendChild(loader);
+    }
+ 
+    function removeBlockingLoader() {
+      let existing = document.getElementById('blocking-matrix-loader');
+      if (existing) existing.remove();
+    }
+ 
+    function getSafeDate(dateString) {
+      if (!dateString || dateString === "No Date" || dateString === "TBD") return null;
+      let clean = dateString.split('T')[0];
+      let d = new Date(clean + 'T00:00:00');
+      return isNaN(d.getTime()) ? null : d;
+    }
+ 
+    function formatDisplayDate(dateString) {
+      let d = getSafeDate(dateString);
+      if (!d) return null;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+ 
+    function formatEventHeaderDate(dateString) {
+      let d = getSafeDate(dateString);
+      if (!d) return "Date: TBD";
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+ 
+    function getUrgencyInfo(dateString, isComplete) {
+      if (isComplete) return { className: '', labelPrefix: '', forceUppercase: false };
+      let due = getSafeDate(dateString);
+      if (!due) return { className: '', labelPrefix: '', forceUppercase: false };
+      let today = new Date();
+      today.setHours(0,0,0,0);
+      let diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return { className: 'matrix-overdue', labelPrefix: 'OVERDUE: ', forceUppercase: true };
+      if (diffDays <= 2) return { className: 'due-imminent', labelPrefix: '>> ', forceUppercase: false };
+      if (diffDays <= 7) return { className: 'due-week', labelPrefix: '', forceUppercase: false };
+      return { className: '', labelPrefix: '', forceUppercase: false };
+    }
+ 
+    function isTaskVisible(task, filter) {
+      if (filter === 'all') return true;
+      if (task.complete) return false; 
+      let due = getSafeDate(task.dueDate);
+      if (!due) return false;
+      let today = new Date();
+      today.setHours(0,0,0,0); 
+      let diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 3600 * 24));
+      if (diffDays < 0) return true; 
+      if (filter === 'today' && diffDays === 0) return true;
+      if (filter === '2days' && diffDays <= 2) return true;
+      if (filter === 'week' && diffDays <= 7) return true;
+      if (filter === '2weeks' && diffDays <= 14) return true;
+      if (filter === '3weeks' && diffDays <= 21) return true;
+      if (filter === 'month' && diffDays <= 30) return true;
+      return false;
+    }
+ 
+    function applyFilterAndExpand(val) {
+      currentFilter = val;
+      if (val !== 'all') {
+        state.eventOrder.forEach(id => state.expandedEvents[id] = true);
+      }
+      renderApp();
+    }
+ 
+    function toggleEventWeb(eventId) {
+      state.expandedEvents[eventId] = !state.expandedEvents[eventId];
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.toggleEventSyncAsync(eventId);
+    }
+ 
+    function dragStart(e, id) { draggedId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.classList.add('dragging'), 0); }
+    function dragEnd(e) { e.target.classList.remove('dragging'); draggedId = null; }
+    function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+    function drop(e, targetId) {
+      e.preventDefault();
+      if (!draggedId || draggedId === targetId) return;
+      let order = [...state.eventOrder];
+      let fromIdx = order.indexOf(draggedId);
+      let toIdx = order.indexOf(targetId);
+      order.splice(fromIdx, 1);
+      order.splice(toIdx, 0, draggedId);
+      state.eventOrder = order;
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.saveEventOrderAsync(order);
+    }
+ 
+    function toggleDropdownMenu(e, id) {
+      e.stopPropagation();
+      let menu = document.getElementById(id);
+      if (!menu) return;
+      let isOpen = menu.style.display === 'block';
+      document.querySelectorAll('.multiselect-menu').forEach(m => m.style.display = 'none');
+      menu.style.display = isOpen ? 'none' : 'block';
+    }
+ 
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.multiselect-menu').forEach(m => m.style.display = 'none');
+    });
+ 
+    function generateAssigneeDropdownHTML(dropdownId, currentEmails, onChangeCallbackStr) {
+      let activeEmails = currentEmails ? currentEmails.split(',').map(s => s.trim()) : [];
+      let displayLabels = [];
+      TEAM_MEMBERS.forEach(m => {
+        if (activeEmails.includes(m.email)) displayLabels.push(m.label);
+      });
+      let boxText = displayLabels.length > 0 ? displayLabels.join(', ') : 'Assign...';
+      let itemsHtml = TEAM_MEMBERS.map(m => {
+        let checked = activeEmails.includes(m.email) ? 'checked' : '';
+        return `
+          <label onclick="event.stopPropagation();">
+            <input type="checkbox" value="${m.email}" ${checked} onchange="${onChangeCallbackStr}">
+            ${m.label}
+          </label>
+        `;
+      }).join('');
+ 
+      return `
+        <div class="multiselect-dropdown">
+          <div class="multiselect-badge-box" onclick="toggleDropdownMenu(event, '${dropdownId}')">
+            <span><i class="far fa-user" style="font-size: 10px; margin-right: 3px;"></i> ${boxText}</span>
+            <i class="fas fa-caret-down" style="font-size: 10px;"></i>
+          </div>
+          <div id="${dropdownId}" class="multiselect-menu">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }
+ 
+    function handleInlineAssigneeChange(eventId, taskId, containerMenuId) {
+      let menu = document.getElementById(containerMenuId);
+      if (!menu) return;
+      let checkedValues = [];
+      menu.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => checkedValues.push(cb.value));
+      let mergedString = checkedValues.join(', ');
+      updateTaskField(eventId, taskId, 'assignee', mergedString);
+    }
+
+    function applyAssigneeFilter(value) {
+      currentAssigneeFilter = value;
+      renderApp();
+    }
+
+    // -- Recursive subtask renderer -----------------------------------------
+    // path = array of indices leading to this subtask, e.g. [2] or [2, 1]
+    // This allows unlimited nesting: task -> subtask -> sub-subtask -> ...
+    function renderSubtasksHTML(subtasks, eventId, taskId, path, event) {
+      if (!subtasks || subtasks.length === 0) return '';
+      let depth = path.length;
+      let indent = depth * 12;
+      return subtasks.map(function(st, idx) {
+        let fullPath = path.concat([idx]);
+        let pathStr = fullPath.join('-');
+        let stTitle = '';
+        let stObj = st.text;
+        if (typeof stObj === 'object' && stObj !== null && (stObj.startTime !== undefined || stObj.endTime !== undefined || stObj.periods !== undefined)) {
+          stTitle = stObj.name || '';
+        } else if (typeof stObj === 'object' && stObj !== null) {
+          stTitle = stObj.name || '';
+        } else {
+          stTitle = stObj || '';
+        }
+        let stComplete = st.complete === true || st.complete === 'true';
+        let stUrgency = getUrgencyInfo(st.dueDate, stComplete);
+        let stPickerValue = '';
+        let stDObj = getSafeDate(st.dueDate);
+        if (stDObj) stPickerValue = stDObj.toISOString().split('T')[0];
+        let stFormattedDate = formatDisplayDate(st.dueDate);
+
+        // Nested subtasks of this subtask
+        let childSubtasks = st.subtasks || [];
+        let childHTML = renderSubtasksHTML(childSubtasks, eventId, taskId, fullPath, event);
+
+        return '<div class="subtask-item" style="margin-left:' + indent + 'px;">' +
+          '<div class="subtask-left">' +
+            '<div class="subtask-checkbox" onclick="toggleSubtaskByPath(\'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '])">' +
+              '<i class="' + (stComplete ? 'fa-solid fa-square-check' : 'fa-regular fa-square') + '" style="color:' + (stComplete ? '#1a73e8' : '#5f6368') + ';"></i>' +
+            '</div>' +
+            '<input type="text" id="subtask-' + eventId + '-' + taskId + '-' + pathStr + '" ' +
+              'class="inline-edit task-meta-input ' + (stComplete ? 'completed-text' : '') + '" ' +
+              'value="' + stTitle.replace(/"/g, '&quot;') + '" placeholder="Subtask..." ' +
+              'style="width:auto; min-width:260px; padding:0;" ' +
+              'onkeydown="handleSubtaskPathKeydown(event, \'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '])" ' +
+              'onchange="updateSubtaskByPath(\'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '], this.value)" ' +
+              'onblur="updateSubtaskByPath(\'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '], this.value)">' +
+          '</div>' +
+          '<div style="display:flex; align-items:center; gap:4px; margin-left:auto; flex-shrink:0;">' +
+            '<input type="date" class="clean-date-input ' + stUrgency.className + ' ' + (!stFormattedDate ? 'no-date' : '') + '" value="' + stPickerValue + '" ' +
+              'onfocus="if(this.showPicker){try{this.showPicker()}catch(e){}}" ' +
+              'onclick="if(this.showPicker){try{this.showPicker()}catch(e){}}" ' +
+              'onchange="updateSubtaskDateByPath(this, \'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '])" ' +
+              'style="text-transform:none;">' +
+            '<div title="Add nested subtask" onclick="addNestedSubtask(\'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '])" ' +
+              'style="cursor:pointer; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#1a73e8; font-size:10px; flex-shrink:0;" ' +
+              'onmouseover="this.style.background=\'#e8f0fe\'" onmouseout="this.style.background=\'transparent\'">' +
+              '<i class="fas fa-plus"></i>' +
+            '</div>' +
+            '<div class="subtask-delete-btn" title="Delete" style="opacity:1;" onclick="deleteSubtaskByPath(\'' + eventId + '\', \'' + taskId + '\', [' + fullPath.join(',') + '])">' +
+              '<i class="far fa-trash-can"></i>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        (childHTML ? '<div style="margin-left:' + (indent + 8) + 'px; border-left:2px solid #e2e8f0; padding-left:6px;">' + childHTML + '</div>' : '');
+      }).join('');
+    }
+
+    // -- Path-based subtask helpers -----------------------------------------
+    // path = array of indices e.g. [2] = subtask at index 2, [2,1] = sub-subtask
+
+    function _getSubtaskByPath(task, path) {
+      let node = task;
+      for (let i = 0; i < path.length; i++) {
+        if (!node.subtasks) return null;
+        node = node.subtasks[path[i]];
+        if (!node) return null;
+      }
+      return node;
+    }
+
+    function _saveTaskSubtasks(eventId, taskId) {
+      var subtasks = state.tasks[eventId][taskId].subtasks;
+      _markDirty(eventId, taskId, 'subtasks', subtasks);
+      if (typeof google !== 'undefined')
+        google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', subtasks);
+    }
+
+    function toggleSubtaskByPath(eventId, taskId, path) {
+      let st = _getSubtaskByPath(state.tasks[eventId][taskId], path);
+      if (!st) return;
+      st.complete = !st.complete;
+      renderApp();
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    function updateSubtaskByPath(eventId, taskId, path, newText) {
+      let st = _getSubtaskByPath(state.tasks[eventId][taskId], path);
+      if (!st) return;
+      if (typeof st.text === 'object' && st.text !== null) st.text.name = newText;
+      else st.text = newText;
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    function updateSubtaskDateByPath(dateField, eventId, taskId, path) {
+      if (!dateField.value) return;
+      let st = _getSubtaskByPath(state.tasks[eventId][taskId], path);
+      if (!st) return;
+      st.dueDate = dateField.value;
+      renderApp();
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    function deleteSubtaskByPath(eventId, taskId, path) {
+      if (!confirm('Delete this subtask and all its children?')) return;
+      let task = state.tasks[eventId][taskId];
+      if (path.length === 1) {
+        task.subtasks.splice(path[0], 1);
+      } else {
+        let parent = _getSubtaskByPath(task, path.slice(0, -1));
+        if (parent && parent.subtasks) parent.subtasks.splice(path[path.length - 1], 1);
+      }
+      renderApp();
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    function addNestedSubtask(eventId, taskId, parentPath) {
+      let task = state.tasks[eventId][taskId];
+      let parent = parentPath.length === 0 ? task : _getSubtaskByPath(task, parentPath);
+      if (!parent) return;
+      if (!parent.subtasks) parent.subtasks = [];
+      let parentDate = parent.dueDate || task.dueDate || 'No Date';
+      let newIdx = parent.subtasks.length;
+      parent.subtasks.push({ text: '', complete: false, dueDate: parentDate, subtasks: [] });
+      let newPath = parentPath.concat([newIdx]);
+      focusAfterRender = 'subtask-' + eventId + '-' + taskId + '-' + newPath.join('-');
+      renderApp();
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    function handleSubtaskPathKeydown(e, eventId, taskId, path) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      updateSubtaskByPath(eventId, taskId, path, e.target.value);
+      // Insert new sibling below current
+      let task = state.tasks[eventId][taskId];
+      let parentPath = path.slice(0, -1);
+      let parent = parentPath.length === 0 ? task : _getSubtaskByPath(task, parentPath);
+      if (!parent || !parent.subtasks) return;
+      let siblingIdx = path[path.length - 1];
+      let parentDate = (parent.subtasks[siblingIdx] || {}).dueDate || task.dueDate || 'No Date';
+      parent.subtasks.splice(siblingIdx + 1, 0, { text: '', complete: false, dueDate: parentDate, subtasks: [] });
+      let newPath = parentPath.concat([siblingIdx + 1]);
+      focusAfterRender = 'subtask-' + eventId + '-' + taskId + '-' + newPath.join('-');
+      renderApp();
+      _saveTaskSubtasks(eventId, taskId);
+    }
+
+    // -- Search functions -------------------------------------------------------
+
+    var _searchTimer = null;
+    function handleSearchInput(val) {
+      searchQuery = val;
+      clearTimeout(_searchTimer);
+      // Debounce: wait 250ms after typing stops before re-rendering
+      _searchTimer = setTimeout(function() { renderApp(); }, 250);
+    }
+
+    function clearSearch() {
+      searchQuery = '';
+      renderApp();
+      // Re-focus search box after clear
+      setTimeout(function() {
+        var el = document.getElementById('global-search-input');
+        if (el) el.focus();
+      }, 30);
+    }
+
+    // -- Custom category dropdown with emoji ----------------------------------
+    // Emoji go into innerHTML via string concatenation, NOT backtick literals,
+    // so they pass through Apps Script's document.write safely.
+
+    var CAT_OPTIONS = [
+      { value: 'programming', emoji: '\u{1F4BB}', label: 'Programming' },
+      { value: 'academic',    emoji: '\u{1F4DA}', label: 'Academic' },
+      { value: 'personal',    emoji: '\u{1F512}', label: 'Josh Personal' },
+      { value: 'all',         emoji: '\u{1F30F}', label: 'All Events' },
+      { value: 'archived',    emoji: '\u{1F4E6}', label: 'Archived' }
+    ];
+
+    function getCatLabel(val) {
+      var opt = CAT_OPTIONS.find(function(o) { return o.value === val; });
+      return opt ? (opt.emoji + ' ' + opt.label) : val;
+    }
+
+    function toggleCatDropdown(e) {
+      if (e) e.stopPropagation();
+      var menu = document.getElementById('cat-dropdown-menu');
+      if (!menu) return;
+      if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+        return;
+      }
+      // Build menu items with emoji via innerHTML (safe string concat)
+      var html = '';
+      CAT_OPTIONS.forEach(function(opt) {
+        var isActive = currentEventTypeView === opt.value;
+        html += '<div onclick="selectCatView(\'' + opt.value + '\')" '
+              + 'style="display:flex; align-items:center; gap:8px; padding:7px 12px; cursor:pointer; '
+              + 'background:' + (isActive ? '#e8f0fe' : 'transparent') + '; '
+              + 'color:' + (isActive ? '#1a73e8' : '#202124') + '; font-weight:' + (isActive ? '600' : '400') + ';" '
+              + 'onmouseover="this.style.background=\'#f1f3f4\'" '
+              + 'onmouseout="this.style.background=\'' + (isActive ? '#e8f0fe' : 'transparent') + '\'">'
+              + '<span style="font-size:16px;">' + opt.emoji + '</span>'
+              + '<span style="font-size:12px; font-family:\'Google Sans\',sans-serif;">' + opt.label + '</span>'
+              + '</div>';
+      });
+      menu.innerHTML = html;
+      menu.style.display = 'block';
+    }
+
+    function selectCatView(val) {
+      var menu = document.getElementById('cat-dropdown-menu');
+      if (menu) menu.style.display = 'none';
+      toggleEventTypeView(val);
+      // Update button label
+      var lbl = document.getElementById('cat-current-label');
+      if (lbl) lbl.innerHTML = getCatLabel(val);
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#cat-dropdown-wrapper')) {
+        var menu = document.getElementById('cat-dropdown-menu');
+        if (menu) menu.style.display = 'none';
+      }
+    });
+
+    // Also update the per-event type selector to use emoji inline
+    function getCatOptionEmoji(val) {
+      var opt = CAT_OPTIONS.find(function(o) { return o.value === val; });
+      return opt ? opt.emoji : '';
+    }
+
+    // -- Category icon helper (kept for any remaining uses) ---------------------
+    // Returns a Font Awesome icon HTML string for a given category type.
+    // These are rendered via innerHTML so FA classes work fine.
+    function getCategoryIcon(type) {
+      if (type === 'academic')   return '<i class="fas fa-book-open" style="color:#34a853; font-size:11px;"></i>';
+      if (type === 'personal')   return '<i class="fas fa-lock" style="color:#9334e6; font-size:11px;"></i>';
+      if (type === 'archived')   return '<i class="fas fa-box-archive" style="color:#5f6368; font-size:11px;"></i>';
+      if (type === 'all')        return '<i class="fas fa-layer-group" style="color:#1a73e8; font-size:11px;"></i>';
+      /* programming (default) */
+      return '<i class="fas fa-laptop-code" style="color:#1a73e8; font-size:11px;"></i>';
+    }
+
+    // Updates the icon in the new-event form category selector
+    function updateEvtCatIcon(type) {
+      var el = document.getElementById('evt-cat-icon');
+      if (el) el.innerHTML = getCategoryIcon(type);
+    }
+
+    // -- Link page autosave on blur --------------------------------------------
+    // Fires when user blurs out of new-link label or url field.
+    // Only saves if BOTH label and url are filled in.
+    function autoSaveNewLinkOnBlur() {
+      // Small delay so the other field's blur can fire first if tabbing between them
+      setTimeout(function() {
+        var labelEl = document.getElementById('new-link-label');
+        var urlEl   = document.getElementById('new-link-url');
+        if (!labelEl || !urlEl) return;
+        var label = labelEl.value.trim();
+        var url   = urlEl.value.trim();
+        if (label && url) saveNewLink();
+      }, 200);
+    }
+
+    // Fires when user blurs out of edit-link fields. Auto-saves the edit.
+    function autoSaveEditLinkOnBlur() {
+      setTimeout(function() {
+        var labelEl = document.getElementById('edit-link-label');
+        var urlEl   = document.getElementById('edit-link-url');
+        var idxEl   = document.getElementById('edit-link-idx');
+        if (!labelEl || !urlEl || !idxEl) return;
+        var label = labelEl.value.trim();
+        var url   = urlEl.value.trim();
+        var idx   = parseInt(idxEl.value, 10);
+        if (label && url && !isNaN(idx)) saveEditLink();
+      }, 200);
+    }
+
+    // -- Idle + beforeunload autosave ------------------------------------------
+    // Tracks the timestamp of the last unsaved change. If changes happened
+    // in the last 3 minutes and the page is about to unload, or the user
+    // has been idle for 60 seconds, flush all pending saves.
+
+    var _lastChangeTime = 0;      // ms timestamp of last state change
+    var _lastSaveTime   = 0;      // ms timestamp of last successful flush
+    var _pendingSaves   = {};     // { "eventId__taskId__field": {eventId,taskId,field,value} }
+    var _idleTimer      = null;
+
+    // Call this whenever a change is made that might not have saved yet
+    function _markDirty(eventId, taskId, field, value) {
+      _lastChangeTime = Date.now();
+      if (eventId && taskId && field !== undefined) {
+        _pendingSaves[eventId + '__' + taskId + '__' + field] = { eventId, taskId, field, value };
+      }
+      // Reset idle timer: flush after 60 seconds of no further changes
+      clearTimeout(_idleTimer);
+      _idleTimer = setTimeout(_flushPendingSaves, 60000);
+    }
+
+    function _flushPendingSaves() {
+      var now = Date.now();
+      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+
+      // Flush any open link forms first (catches navigation-away mid-edit)
+      _flushLinkForms();
+
+      // Only flush task saves if there are unsaved changes within last 3 minutes
+      if (_lastChangeTime === 0 || (now - _lastChangeTime) > 3 * 60 * 1000) return;
+
+      var keys = Object.keys(_pendingSaves);
+      if (keys.length > 0) {
+        console.log('Autosave: flushing ' + keys.length + ' pending save(s)');
+        keys.forEach(function(k) {
+          var s = _pendingSaves[k];
+          google.script.run.updateTaskFieldAsync(s.eventId, s.taskId, s.field, s.value);
+        });
+        _pendingSaves = {};
+        _lastSaveTime = now;
+      }
+    }
+
+    // Intercept page unload/refresh -- flush immediately
+    window.addEventListener('beforeunload', function(e) {
+      var now = Date.now();
+      // If changes within last 3 minutes, flush
+      if (_lastChangeTime > 0 && (now - _lastChangeTime) < 3 * 60 * 1000) {
+        _flushPendingSaves();
+        // Show browser "are you sure?" dialog only if there were unsaved changes
+        // (some browsers require returnValue to be set to show the dialog)
+        e.returnValue = 'You may have unsaved changes. Are you sure you want to leave?';
+      }
+    });
+
+    // Also flush when tab becomes hidden (switching apps, minimizing, etc.)
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) _flushPendingSaves();
+    });
+
+    // -- Patch updateTaskField to mark dirty -----------------------------------
+    // We wrap the existing updateTaskField to also track pending saves.
+    var _origUpdateTaskField = null; // set after function is defined
+
+    /* =====================================================================
+       CORE RENDER FUNCTION
+    ===================================================================== */
+    function renderApp() {
+      removeBlockingLoader();
+
+      // Password gate for Personal view
+      if (showingPersonalPrompt) {
+        document.getElementById('app').innerHTML =
+          '<div style="display:flex; align-items:center; justify-content:center; min-height:300px;">' +
+            '<div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:32px; max-width:360px; width:100%; box-shadow:0 2px 12px rgba(0,0,0,0.08); text-align:center;">' +
+              '<div style="font-size:28px; margin-bottom:12px; color:#5f6368;"><i class="fas fa-lock"></i></div>' +
+              '<h3 style="margin:0 0 6px 0; font-family:Google Sans,sans-serif; font-size:16px; color:#202124;">Josh Personal</h3>' +
+              '<p style="margin:0 0 20px 0; font-size:13px; color:#5f6368;">Enter the password to access this section.</p>' +
+              '<input type="password" id="personal-pwd-input" ' +
+                'style="width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid #dadce0; border-radius:4px; font-size:14px; margin-bottom:8px; outline:none;" ' +
+                'placeholder="Password..." ' +
+                'onkeydown="if(event.key===\'Enter\') submitPersonalPassword()">' +
+              '<div id="personal-pwd-error" style="display:none; color:#d93025; font-size:12px; margin-bottom:10px;">Incorrect password. Try again.</div>' +
+              '<div style="display:flex; gap:8px; justify-content:center;">' +
+                '<button class="btn" onclick="submitPersonalPassword()">Unlock</button>' +
+                '<button class="btn btn-secondary" onclick="cancelPersonalPassword()">Cancel</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        setTimeout(function() {
+          var el = document.getElementById('personal-pwd-input');
+          if (el) el.focus();
+        }, 50);
+        return;
+      }
+      let uniqueAssignees = new Set();
+      if (state.tasks) {
+        Object.values(state.tasks).forEach(eventTasks => {
+          Object.values(eventTasks).forEach(task => {
+            if (task.assignee) {
+              let assignees = Array.isArray(task.assignee) ? task.assignee : String(task.assignee).split(',');
+              assignees.forEach(person => {
+                let trimmed = person.trim();
+                if (trimmed) uniqueAssignees.add(trimmed);
+              });
+            }
+          });
+        });
+      }
+      let assigneeOptions = Array.from(uniqueAssignees).sort();
+ 
+      let filterBtnText = selectedAssigneeFilters.length === 0 
+        ? 'All Assignees' 
+        : `Assignees (${selectedAssigneeFilters.length})`;
+ 
+      let html = `
+        <div style="padding-bottom:6px; margin-bottom:10px; border-bottom:1px solid #e2e8f0;">
+          <!-- Row 1: Title, Search, Collapse -- centered -->
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+            <h2 style="margin:0; font-family:'Google Sans',sans-serif; font-size:16px; color:#1a73e8; white-space:nowrap; flex-shrink:0;">
+              <i class="fas fa-check-circle"></i> Tasks Matrix
+            </h2>
+            <div style="position:relative; display:inline-flex; align-items:center; width:240px;">
+              <i class="fas fa-search" style="position:absolute; left:8px; color:#5f6368; font-size:11px; pointer-events:none;"></i>
+              <input type="text" id="global-search-input"
+                value="${searchQuery}"
+                placeholder="Search tasks..."
+                style="padding:5px 8px 5px 26px; border:1px solid #dadce0; border-radius:4px; font-size:12px; font-family:'Google Sans',sans-serif; outline:none; width:100%; box-sizing:border-box; background:${searchQuery ? '#e8f0fe' : '#f8f9fa'}; color:#202124;"
+                oninput="handleSearchInput(this.value)"
+                onkeydown="if(event.key==='Escape'){clearSearch();}">
+              ${searchQuery ? '<div onclick="clearSearch()" style="position:absolute; right:6px; cursor:pointer; color:#5f6368; font-size:12px;" title="Clear">x</div>' : ''}
+            </div>
+            <button onclick="collapseAllAccordions()" title="Collapse all" style="padding:5px 10px; font-size:12px; background:#ffffff; color:#5f6368; border:1px solid #dadce0; border-radius:4px; cursor:pointer; font-weight:500; flex-shrink:0;">
+              <i class="fas fa-angles-up"></i>
+            </button>
+          </div>
+          <!-- Row 2: All controls -- centered -->
+          <div style="display:flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;">
+            <div style="position:relative; display:inline-block;" id="cat-dropdown-wrapper">
+              <button onclick="toggleCatDropdown(event)" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:#f8f9fa; border:1px solid #cbd5e1; border-radius:4px; font-size:12px; font-weight:500; font-family:'Google Sans',sans-serif; cursor:pointer; white-space:nowrap;">
+                <span id="cat-current-label">${getCatLabel(currentEventTypeView)}</span>
+                <i class="fas fa-caret-down" style="font-size:10px; color:#5f6368;"></i>
+              </button>
+              <div id="cat-dropdown-menu" style="display:none; position:absolute; top:110%; left:0; background:#fff; border:1px solid #dadce0; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.12); z-index:2000; min-width:160px; padding:4px 0; font-size:13px;">
+              </div>
+            </div>
+            <div class="custom-multiselect" style="position:relative; display:inline-block;">
+              <button class="btn btn-secondary" onclick="toggleAssigneeFilterMenu(event)" style="background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc; font-weight:500;">
+                ${filterBtnText} <i class="fas fa-caret-down" style="margin-left:4px;"></i>
+              </button>
+              <div style="display:${isAssigneeFilterMenuOpen ? 'block' : 'none'}; position:absolute; top:100%; left:0; margin-top:4px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px; z-index:1000; min-width:180px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:250px; overflow-y:auto;">
+                <div style="font-size:11px; color:#5f6368; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                  <span>Filter by:</span>
+                  ${selectedAssigneeFilters.length > 0 ? `<span style="color:#1a73e8; cursor:pointer; font-weight:600;" onclick="clearAssigneeFilters()">Clear All</span>` : ''}
+                </div>
+                ${assigneeOptions.length === 0 ? '<div style="font-size:12px; color:#5f6368;">No assignees found</div>' : ''}
+                ${assigneeOptions.map(person => `
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:4px 6px; font-size:13px; color:#202124; border-radius:4px;" onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                    <input type="checkbox" onchange="toggleSingleAssigneeFilter('${person}')" ${selectedAssigneeFilters.includes(person) ? 'checked' : ''} style="cursor:pointer;">
+                    ${person}
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            <select class="btn btn-secondary" onchange="applyFilterAndExpand(this.value)" style="font-size:12px;">
+              <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>All Tasks</option>
+              <option value="today" ${currentFilter === 'today' ? 'selected' : ''}>Overdue + Today</option>
+              <option value="2days" ${currentFilter === '2days' ? 'selected' : ''}>Due in 2 Days</option>
+              <option value="week" ${currentFilter === 'week' ? 'selected' : ''}>This Week</option>
+              <option value="2weeks" ${currentFilter === '2weeks' ? 'selected' : ''}>2 Weeks</option>
+              <option value="3weeks" ${currentFilter === '3weeks' ? 'selected' : ''}>3 Weeks</option>
+              <option value="month" ${currentFilter === 'month' ? 'selected' : ''}>This Month</option>
+            </select>
+            <button class="btn btn-secondary" onclick="showTemplateWorkspace()" title="Templates"><i class="fas fa-layer-group"></i> Templates</button>
+            <button class="btn btn-secondary" onclick="showLinksPage()" style="background:#e8f0fe; color:#1a73e8; border-color:#d2e3fc;"><i class="fas fa-link"></i> Links</button>
+            <button class="btn" onclick="showEventForm()">+ New Event</button>
+          </div>
+        </div>
+        <div id="list-container">
+          ${searchQuery.trim() ? `<div style="padding:6px 10px; background:#e8f0fe; border:1px solid #d2e3fc; border-radius:6px; font-size:12px; color:#1a73e8; display:flex; align-items:center; justify-content:space-between;">
+            <span><i class="fas fa-search" style="margin-right:6px;"></i>Searching for: <strong>${searchQuery}</strong></span>
+            <span style="cursor:pointer; font-weight:600;" onclick="clearSearch()">Clear x</span>
+          </div>` : ''}
+      `;
+ 
+      let renderedEventsCount = 0;
+
+      function renderTaskHTML(eventId, taskId, task, event) {
+        let formattedDate = formatDisplayDate(task.dueDate);
+        let urgency = getUrgencyInfo(task.dueDate, task.complete);
+        let circleIcon = task.complete ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+        let circleColor = task.complete ? '#1a73e8' : '#5f6368';
+        let subtasks = task.subtasks || [];
+
+        let pickerValue = "";
+        let dObj = getSafeDate(task.dueDate);
+        if (dObj) pickerValue = dObj.toISOString().split('T')[0];
+
+        let isLoc = false;
+        let tObj = task.text;
+        let tTitle = "";
+        let sTime = "", eTime = "", periods = [];
+
+        if (typeof tObj === 'object' && tObj !== null && (tObj.startTime !== undefined || tObj.endTime !== undefined || tObj.periods !== undefined)) {
+          isLoc = true;
+          tTitle = tObj.name || "";
+          sTime = tObj.startTime || "";
+          eTime = tObj.endTime || "";
+          periods = tObj.periods || [];
+        } else if (typeof tObj === 'object' && tObj !== null) {
+          // Template task object {name, subtasks} -- treat as plain text task
+          tTitle = tObj.name || "";
+        } else if (LOCATIONS.includes(tObj)) {
+          isLoc = true;
+          tTitle = tObj;
+          let evLoc = (event.locations || []).find(l => (typeof l === 'object' ? l.name : l) === tTitle);
+          if (evLoc && typeof evLoc === 'object') {
+            sTime = evLoc.startTime || "";
+            eTime = evLoc.endTime || "";
+            periods = evLoc.periods || [];
+          }
+        } else {
+          tTitle = tObj || "";
+        }
+
+        let locInlineHTML = "";
+        if (isLoc) {
+          locInlineHTML = `
+            <span style="font-size: 11px; color: #5f6368; white-space: nowrap; margin-left: 4px; display: inline-flex; align-items: center; gap: 3px;">
+              (Periods: <input type="text" value="${periods.join(', ')}" style="width: 40px; font-size: 10px; border: none; border-bottom: 1px dashed #cbd5e1; background: transparent; color: #1a73e8; outline: none; text-align: center;" onchange="updateTaskLocField('${eventId}', '${taskId}', null, 'periods', this.value)" placeholder="1, 2">,
+              Start Time: <input type="time" value="${sTime}" style="font-size: 10px; border: none; background: transparent; color: #1a73e8; outline: none; cursor: pointer;" onchange="updateTaskLocField('${eventId}', '${taskId}', null, 'startTime', this.value)">,
+              End Time: <input type="time" value="${eTime}" style="font-size: 10px; border: none; background: transparent; color: #1a73e8; outline: none; cursor: pointer;" onchange="updateTaskLocField('${eventId}', '${taskId}', null, 'endTime', this.value)">)
+            </span>
+          `;
+        }
+
+        let menuId = `menu-${eventId}-${taskId}`;
+        let multiselectDropdownHTML = generateAssigneeDropdownHTML(menuId, task.assignee, `handleInlineAssigneeChange('${eventId}', '${taskId}', '${menuId}')`);
+
+        let subtasksHTML = renderSubtasksHTML(subtasks, eventId, taskId, [], event);
+
+        // Link field
+        let taskLink = task.link || '';
+        let linkBadgeHTML = taskLink
+          ? '<a href="' + taskLink.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener noreferrer" class="task-link-badge" onclick="event.stopPropagation();" title="' + taskLink.replace(/"/g, '&quot;') + '"><i class="fas fa-link" style="font-size:9px;"></i> Open Link</a>'
+          : '';
+        // Show inline link editor if this task is being link-edited
+        let linkEditHTML = (linkEditingTask === eventId + '__' + taskId)
+          ? '<div class="link-edit-row" onclick="event.stopPropagation();">' +
+              '<i class="fas fa-link" style="font-size:11px; color:#1a73e8; flex-shrink:0;"></i>' +
+              '<input type="text" id="link-input-' + eventId + '-' + taskId + '"' +
+                ' placeholder="https://..."' +
+                ' value="' + taskLink.replace(/"/g, '&quot;') + '"' +
+                ' onkeydown="handleLinkInputKeydown(event, \'' + eventId + '\', \'' + taskId + '\')">' +
+              '<div onmousedown="event.preventDefault(); saveLinkFromInput(\'' + eventId + '\', \'' + taskId + '\')" style="cursor:pointer; font-size:11px; font-weight:500; color:#1a73e8; white-space:nowrap; padding:2px 8px; border-radius:4px; background:#e8f0fe;">Save</div>' +
+              '<div onmousedown="event.preventDefault(); removeTaskLink(\'' + eventId + '\', \'' + taskId + '\')" style="cursor:pointer; font-size:11px; color:#d93025; white-space:nowrap; padding:2px 8px; border-radius:4px; background:#fce8e6;">Remove</div>' +
+              '<div onmousedown="event.preventDefault(); closeLinkEditor()" style="cursor:pointer; color:#5f6368; font-size:14px; padding:2px 6px; line-height:1;" title="Cancel">&times;</div>' +
+            '</div>'
+          : '';
+
+        return `
+          <div class="task-item">
+            <div class="task-checkbox" onclick="toggleTask('${eventId}', '${taskId}')" style="color: ${circleColor};">
+              <i class="${circleIcon}"></i>
+            </div>
+            <div class="task-content">
+              <div class="task-input-container">
+                <textarea id="title-${eventId}-${taskId}" class="inline-edit task-title-input ${task.complete ? 'completed-text' : ''}" rows="1" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px';" onkeydown="handleTaskKeydown(event, '${eventId}', '${taskId}', 'text')" onchange="updateTaskField('${eventId}', '${taskId}', 'text', this.value)" onblur="updateTaskField('${eventId}', '${taskId}', 'text', this.value)" style="width: auto; flex-grow: 0; min-width: 300px; padding: 0;">${tTitle}</textarea>
+                ${linkBadgeHTML}
+                ${locInlineHTML}
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                  ${multiselectDropdownHTML}
+                  <input type="date" class="clean-date-input ${urgency.className} ${!formattedDate ? 'no-date' : ''}" value="${pickerValue}" onfocus="if(this.showPicker){try{this.showPicker()}catch(e){}}" onclick="if(this.showPicker){try{this.showPicker()}catch(e){}}" onchange="updateInlineDate(this, '${eventId}', '${taskId}')" style="text-transform: none;">
+                </div>
+              </div>
+              ${linkEditHTML}
+              <div class="subtask-container">
+                ${isLoc ? `
+                  <div class="subtask-item" style="margin-bottom: 2px;">
+                    <div class="subtask-left">
+                      <span style="font-size: 11px; font-weight: bold; color: #1a73e8; background: #e8f0fe; padding: 1px 6px; border-radius: 4px; text-transform: uppercase;">SETUPS</span>
+                      <input type="text" class="inline-edit task-meta-input" style="font-size:12px; font-weight:500; background: #fff; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; width: 220px;"
+                        placeholder="Input customized location setups details..."
+                        value="${task.setupText || ''}"
+                        onchange="updateTaskField('${eventId}', '${taskId}', 'setupText', this.value)">
+                    </div>
+                  </div>
+                ` : ''}
+                ${subtasksHTML}
+              </div>
+            </div>
+            <div class="task-actions">
+              <div class="action-btn" title="Add Link (Ctrl+K)" onclick="openLinkEditor('${eventId}', '${taskId}')"><i class="fas fa-link"></i></div>
+              <div class="action-btn" title="Add Subtask" onclick="addSubtask('${eventId}', '${taskId}')"><i class="fas fa-plus"></i></div>
+              <div class="action-btn delete-btn" title="Delete Task" onclick="deleteTask('${eventId}', '${taskId}')"><i class="far fa-trash-can"></i></div>
+            </div>
+          </div>
+        `;
+      }
+
+      let eventsToRender = state.eventOrder.filter(eventId => {
+        let event = state.events[eventId];
+        if (!event) return false;
+        let isArchived = state.events[eventId].isArchived === true || state.events[eventId].isArchived === "true";
+        if (currentEventTypeView === 'archived') {
+          return isArchived;
+        } else {
+          if (isArchived) return false;
+          if (currentEventTypeView === 'all') return true;
+          let eventType = event.eventType === 'academic' ? 'academic'
+                        : event.eventType === 'personal' ? 'personal'
+                        : 'programming';
+          return eventType === currentEventTypeView;
+        }
+      });
+
+      // Search mode: filter events/tasks by query, respecting access control
+      let searchActive = searchQuery.trim().length > 0;
+      let sq = searchQuery.trim().toLowerCase();
+
+      function taskMatchesSearch(task) {
+        if (!searchActive) return true;
+        // Search task text
+        let taskText = '';
+        if (typeof task.text === 'object' && task.text !== null) taskText = (task.text.name || '').toLowerCase();
+        else taskText = String(task.text || '').toLowerCase();
+        if (taskText.includes(sq)) return true;
+        // Search subtasks recursively
+        function checkSubs(subs) {
+          return (subs || []).some(function(st) {
+            let stText = typeof st.text === 'object' ? (st.text.name || '') : String(st.text || '');
+            if (stText.toLowerCase().includes(sq)) return true;
+            return checkSubs(st.subtasks);
+          });
+        }
+        return checkSubs(task.subtasks);
+      }
+
+      if (searchActive) {
+        eventsToRender = eventsToRender.filter(eventId => {
+          let event = state.events[eventId];
+          // Event name matches
+          if ((event.name || '').toLowerCase().includes(sq)) return true;
+          // Any task matches
+          let tasks = state.tasks[eventId] || {};
+          return Object.values(tasks).some(taskMatchesSearch);
+        });
+      }
+
+      eventsToRender.forEach((eventId) => {
+        let event = state.events[eventId];
+        let eventTasks = state.tasks[eventId] || {};
+        // Auto-expand when searching
+        let isOpen = searchActive ? true : !!state.expandedEvents[eventId];
+        
+        let sortedTaskIds = Object.keys(eventTasks).sort((a, b) => {
+          let dateA = getSafeDate(eventTasks[a].dueDate) ? getSafeDate(eventTasks[a].dueDate).getTime() : 9999999999999;
+          let dateB = getSafeDate(eventTasks[b].dueDate) ? getSafeDate(eventTasks[b].dueDate).getTime() : 9999999999999;
+          return dateA - dateB;
+        });
+
+        let incompleteTaskIds = sortedTaskIds.filter(id => !eventTasks[id].complete && isTaskVisible(eventTasks[id], currentFilter));
+        let completedTaskIds  = sortedTaskIds.filter(id =>  eventTasks[id].complete);
+
+        // In search mode, further filter tasks to only matching ones
+        if (searchActive) {
+          incompleteTaskIds = incompleteTaskIds.filter(id => taskMatchesSearch(eventTasks[id]));
+          completedTaskIds  = completedTaskIds.filter(id => taskMatchesSearch(eventTasks[id]));
+          // Also check if event name matches (show all tasks of a matching event)
+          if ((event.name || '').toLowerCase().includes(sq)) {
+            incompleteTaskIds = sortedTaskIds.filter(id => !eventTasks[id].complete && isTaskVisible(eventTasks[id], currentFilter));
+            completedTaskIds  = sortedTaskIds.filter(id =>  eventTasks[id].complete);
+          }
+        }
+
+        if (selectedAssigneeFilters.length > 0) {
+          incompleteTaskIds = incompleteTaskIds.filter(taskId => {
+            let assigneeData = eventTasks[taskId].assignee;
+            if (!assigneeData) return false;
+            let assigneeStr = Array.isArray(assigneeData) ? assigneeData.join(',').toLowerCase() : String(assigneeData).toLowerCase();
+            return selectedAssigneeFilters.some(fp => assigneeStr.includes(fp.toLowerCase()));
+          });
+        }
+
+        if ((currentFilter !== 'all' || selectedAssigneeFilters.length > 0) && incompleteTaskIds.length === 0 && completedTaskIds.length === 0) return;
+
+        renderedEventsCount++;
+ 
+        let headerPickerValue = "";
+        let evDateObj = getSafeDate(event.date);
+        if (evDateObj) headerPickerValue = evDateObj.toISOString().split('T')[0];
+        let headerDateStr = formatEventHeaderDate(event.date);
+ 
+        html += `
+          <div class="event-card ${isOpen ? 'is-open' : ''}" draggable="true" ondragstart="dragStart(event, '${eventId}')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondrop="drop(event, '${eventId}')">
+            <div class="event-title" onclick="toggleEventWeb('${eventId}')">
+              <div class="event-title-left">
+                <i class="fas fa-grip-vertical drag-handle" title="Drag to reorder" onclick="event.stopPropagation();"></i>
+                <input type="text" class="inline-edit" 
+                  value="${event.name.replace(/"/g, '&quot;')}"
+                  style="font-size:14px; font-weight:500; font-family:'Google Sans',sans-serif; min-width:200px; flex-grow:1; padding:1px 4px; background:transparent; border:1px solid transparent; border-radius:4px;"
+                  onclick="event.stopPropagation();"
+                  onblur="updateEventName('${eventId}', this.value)"
+                  onkeydown="if(event.key==='Enter'){ event.preventDefault(); this.blur(); }">
+              </div>
+              <div class="event-title-right" onclick="event.stopPropagation();">
+                <select class="borderless-input event-type-select" onchange="updateEventType('${eventId}', this.value)" title="Set Event Type" style="font-size:11px; background:#f1f3f4; border-radius:4px; padding:2px 4px; margin-right:8px; color:#5f6368; cursor:pointer;">
+                  <option value="programming" ${(!event.eventType || event.eventType === 'programming') ? 'selected' : ''}>Prog</option>
+                  <option value="academic" ${event.eventType === 'academic' ? 'selected' : ''}>Acad</option>
+                  <option value="personal" ${event.eventType === 'personal' ? 'selected' : ''}>Personal</option>
+                </select>
+                <input type="text"
+                       class="event-header-date-widget"
+                       value="${headerDateStr}"
+                       onfocus="this.type='date'; this.value='${headerPickerValue}'; if(this.showPicker){try{this.showPicker()}catch(e){}}"
+                       onclick="event.stopPropagation(); if(this.type==='date'&&this.showPicker){try{this.showPicker()}catch(e){}}"
+                       onblur="if(!this.value){this.type='text'; this.value='Date: TBD';} else { this.type='text'; let d=new Date(this.value+'T00:00:00'); this.value=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}); }"
+                       onchange="updateEventTitleDate(this, '${eventId}')"
+                       title="Click to change target date">
+                ${currentEventTypeView === 'archived' ? `
+                  <button class="btn" data-restore-id="${eventId}" onclick="event.stopPropagation(); restoreEvent(this)" style="padding: 2px 8px; font-size: 11px; background: #e8f0fe; color: #1a73e8; border: 1px solid #d2e3fc; border-radius: 4px; cursor: pointer; margin-right: 8px; font-weight: 500;">
+                    <i class="fas fa-trash-arrow-up"></i> Restore
+                  </button>
+                ` : ''}
+                ${currentEventTypeView === 'archived' ? `
+                  <button class="btn" data-delete-id="${eventId}" onclick="event.stopPropagation(); permanentDeleteEvent(this)" style="padding: 2px 8px; font-size: 11px; background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-trash-can"></i> Delete Permanently
+                  </button>
+                ` : ''}
+                <div class="event-delete-btn" title="Archive Entire Event Portfolio" onclick="event.stopPropagation(); deleteEntireEvent('${eventId}', (state.events['${eventId}']||{}).name||'this event')">
+                  <i class="far fa-trash-can"></i>
+                </div>
+                <i class="fas ${isOpen ? 'fa-chevron-up' : 'fa-chevron-down'}" style="color:#5f6368; font-size: 12px; cursor: pointer; margin-left: 4px;" onclick="toggleEventWeb('${eventId}')"></i>
+              </div>
+            </div>
+        `;
+ 
+        if (isOpen) {
+          html += `<div class="event-details">`;
+
+          if (event.locations && event.locations.length > 0) {
+            html += `
+              <div style="margin: 4px 0 10px 0; padding: 10px; background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a73e8; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                  <i class="fas fa-location-dot"></i> Scheduled Locations Map
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            `;
+            event.locations.forEach((loc) => {
+              let locName = (typeof loc === 'object' && loc !== null) ? loc.name : loc;
+              let startTime = (typeof loc === 'object' && loc !== null) ? loc.startTime : '';
+              let endTime = (typeof loc === 'object' && loc !== null) ? loc.endTime : '';
+              let periods = (typeof loc === 'object' && loc !== null && loc.periods) ? loc.periods : [];
+              html += `
+                <div class="location-wrapper" style="padding: 8px; min-width: 220px; box-shadow: none;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-map-pin" style="color: #5f6368; font-size: 11px;"></i>
+                    <input type="text" class="borderless-input" value="${locName}" readonly style="font-size: 12px; font-weight: 500; color: #202124; background: #f1f3f4; padding: 2px 6px; border-radius: 4px; width: 100%;">
+                  </div>
+                  <div style="display: flex; gap: 4px; margin-top: 2px;">
+                    <div class="time-widget-group" style="padding: 1px 4px;">
+                      <label class="start">Start Time:</label> <span style="font-size:11px;">${startTime || '--:--'}</span>
+                    </div>
+                    <div class="time-widget-group" style="padding: 1px 4px;">
+                      <label class="finish">Finish Time:</label> <span style="font-size:11px;">${endTime || '--:--'}</span>
+                    </div>
+                  </div>
+                  ${periods.length > 0 ? `<div style="font-size: 9px; color: #5f6368; margin-top: 1px; font-weight:500;">Periods: ${periods.join(', ')}</div>` : ''}
+                </div>
+              `;
+            });
+            html += `</div></div>`;
+          }
+
+          html += `<div class="tasks-box">`;
+          if (incompleteTaskIds.length === 0 && completedTaskIds.length === 0) {
+            html += `<div style="padding: 8px; font-size: 12px; color: #5f6368; text-align: center;">No tasks yet.</div>`;
+          }
+          incompleteTaskIds.forEach(taskId => {
+            html += renderTaskHTML(eventId, taskId, eventTasks[taskId], event);
+          });
+          html += `</div>`;
+
+          if (completedTaskIds.length > 0) {
+            let showCompleted = !!showCompletedTasks[eventId];
+            html += `
+              <div style="margin-top: 4px; border-top: 1px dashed #e2e8f0; padding-top: 2px;">
+                <div class="completed-section-toggle" onclick="toggleCompletedSection('${eventId}')">
+                  <i class="fas ${showCompleted ? 'fa-chevron-down' : 'fa-chevron-right'}" style="font-size: 10px; width: 10px; color: #34a853;"></i>
+                  <i class="fas fa-circle-check" style="color: #34a853; font-size: 11px;"></i>
+                  <span style="color: #34a853;">${completedTaskIds.length} completed task${completedTaskIds.length !== 1 ? 's' : ''}</span>
+                </div>
+                ${showCompleted ? `
+                  <div class="completed-tasks-wrapper">
+                    <div class="tasks-box">
+                      ${completedTaskIds.map(taskId => renderTaskHTML(eventId, taskId, eventTasks[taskId], event)).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }
+
+          if (currentFilter === 'all') {
+            html += `
+              <div class="add-task-box">
+                <div class="task-checkbox"><i class="fas fa-plus" style="font-size: 12px; color: #1a73e8;"></i></div>
+                <div class="add-task-inputs">
+                  <input type="text" id="txt-${eventId}" class="borderless-input task-title-input" placeholder="Type a task and press Enter..." onkeydown="handleManualAddBoxEnter(event, '${eventId}')">
+                </div>
+              </div>
+            `;
+          }
+          html += `</div>`;
+        }
+        html += `</div>`;
+      });
+ 
+      if (renderedEventsCount === 0) {
+        html += `<div style="text-align:center; padding: 24px; color:#5f6368; background: #fff; border-radius: 6px; border: 1px dashed #cbd5e1; font-size:13px;">All caught up! No events match your current view.</div>`;
+      }
+ 
+      html += `</div>`;
+      document.getElementById('app').innerHTML = html;
+ 
+      // Auto-size all task textareas after render
+      document.querySelectorAll('textarea.inline-edit').forEach(function(ta) {
+        ta.style.height = '';
+        ta.style.height = ta.scrollHeight + 'px';
+      });
+
+      // Inject emoji into per-event type selectors (can't use emoji in template literal options)
+      document.querySelectorAll('.event-type-select').forEach(function(sel) {
+        Array.from(sel.options).forEach(function(opt) {
+          var found = CAT_OPTIONS.find(function(c) { return c.value === opt.value; });
+          if (found && !opt.text.startsWith(found.emoji)) {
+            opt.text = found.emoji + ' ' + found.label.split(' ')[0];
+          }
+        });
+      });
+
+      if (focusAfterRender) {
+        let el = document.getElementById(focusAfterRender);
+        if (el) { el.focus(); if (el.setSelectionRange && el.value) { let len = el.value.length; el.setSelectionRange(len, len); } }
+        focusAfterRender = null;
+      }
+    }
+
+    /* =====================================================================
+       UI ACTION HANDLERS
+    ===================================================================== */
+ 
+    function updateEventName(eventId, newName) {
+      newName = (newName || "").trim();
+      if (!newName) return;
+      if (state.events[eventId]) state.events[eventId].name = newName;
+      if (typeof google !== 'undefined') google.script.run.updateEventNameAsync(eventId, newName);
+    }
+
+    function updateEventTitleDate(element, eventId) {
+      let newDate = element.value; 
+      let eventDate = newDate ? newDate + 'T00:00:00' : "No Date";
+      if(state.events[eventId]) state.events[eventId].date = eventDate;
+      sortEventsChronologically();
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.updateEventDateAsync(eventId, eventDate);
+    }
+ 
+    function toggleTask(eventId, taskId) {
+      state.tasks[eventId][taskId].complete = !state.tasks[eventId][taskId].complete;
+      renderApp(); 
+      if (typeof google !== 'undefined') google.script.run.toggleTaskStatusAsync(eventId, taskId);
+    }
+ 
+    function updateTaskField(eventId, taskId, field, newValue) {
+      if (field === 'text') {
+        let task = state.tasks[eventId][taskId];
+        if (typeof task.text === 'object' && task.text !== null) { task.text.name = newValue; newValue = task.text; }
+      }
+      state.tasks[eventId][taskId][field] = newValue;
+      _markDirty(eventId, taskId, field, newValue);
+      if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, field, newValue);
+      if (field === 'text' || field === 'assignee') renderApp();
+    }
+ 
+    function updateSubtask(eventId, taskId, subIdx, newText) {
+      let st = state.tasks[eventId][taskId].subtasks[subIdx];
+      if (typeof st.text === 'object' && st.text !== null) st.text.name = newText; else st.text = newText;
+      if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', state.tasks[eventId][taskId].subtasks);
+      renderApp();
+    }
+ 
+    function updateTaskLocField(eventId, taskId, subIdx, field, value) {
+      let target = (subIdx !== null && subIdx !== undefined) ? state.tasks[eventId][taskId].subtasks[subIdx] : state.tasks[eventId][taskId];
+      if (typeof target.text !== 'object' || target.text === null) target.text = { name: target.text, startTime: "", endTime: "", periods: [] };
+      if (field === 'periods') target.text.periods = value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      else target.text[field] = value;
+      if (subIdx !== null && subIdx !== undefined) {
+        if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', state.tasks[eventId][taskId].subtasks);
+      } else {
+        if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'text', target.text);
+      }
+    }
+ 
+    function updateInlineDate(dateField, eventId, taskId) {
+      if (!dateField.value) return;
+      updateTaskField(eventId, taskId, 'dueDate', dateField.value);
+      renderApp(); 
+    }
+ 
+    function updateSubtaskDate(dateField, eventId, taskId, subIdx) {
+      if (!dateField.value) return;
+      state.tasks[eventId][taskId].subtasks[subIdx].dueDate = dateField.value;
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', state.tasks[eventId][taskId].subtasks);
+    }
+ 
+    function deleteTask(eventId, taskId) {
+      if (confirm("Are you sure you want to permanently delete this task?")) {
+        if (state.tasks[eventId] && state.tasks[eventId][taskId]) {
+          delete state.tasks[eventId][taskId];
+          renderApp();
+          if (typeof google !== 'undefined') google.script.run.deleteSpecificTaskAsync(eventId, taskId);
+        }
+      }
+    }
+ 
+    function deleteSubtask(eventId, taskId, subIdx) {
+      if (confirm("Are you sure you want to permanently delete this subtask?")) {
+        let subtasks = state.tasks[eventId][taskId].subtasks || [];
+        subtasks.splice(subIdx, 1);
+        state.tasks[eventId][taskId].subtasks = subtasks;
+        renderApp();
+        if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', subtasks);
+      }
+    }
+
+    function deleteEntireEvent(eventId, eventName) {
+      if (!confirm(`Are you sure you want to archive "${eventName}"?`)) return;
+      if (state.events && state.events[eventId]) state.events[eventId].isArchived = "true";
+      renderApp();
+      if (typeof google !== 'undefined' && google.script?.run) {
+        google.script.run
+          .withFailureHandler(function(err) { console.error("BACKEND FAILURE:", err.message); })
+          .withSuccessHandler(function(fullBundle) { state = fullBundle; renderApp(); })
+          .updateEventArchiveStatusAsync(eventId, "true");
+      }
+    }
+
+    function restoreEvent(targetElement) {
+      let eventId;
+      if (targetElement && typeof targetElement === 'object' && typeof targetElement.getAttribute === 'function') {
+        eventId = targetElement.getAttribute('data-restore-id');
+      } else {
+        eventId = targetElement;
+      }
+      if (!eventId) return;
+      if (state.events && state.events[eventId]) { state.events[eventId].isArchived = "false"; renderApp(); }
+      if (typeof google !== 'undefined' && google.script?.run) {
+        google.script.run
+          .withFailureHandler(function(err) { alert("Server failed to process the restore: " + err.message); })
+          .withSuccessHandler(function(fullDataBundle) { state = fullDataBundle; renderApp(); })
+          .updateEventArchiveStatusAsync(eventId, "false");
+      }
+    }
+
+    function toggleSubtask(eventId, taskId, subIdx) {
+      state.tasks[eventId][taskId].subtasks[subIdx].complete = !state.tasks[eventId][taskId].subtasks[subIdx].complete;
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', state.tasks[eventId][taskId].subtasks);
+    }
+ 
+    function handleTaskKeydown(e, eventId, taskId, fieldName) {
+      // Ctrl+K / Cmd+K -- open link editor
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        openLinkEditor(eventId, taskId);
+        return;
+      }
+      if (e.key === 'Enter') {
+        if (e.ctrlKey || e.metaKey) {
+          if (e.target.tagName.toLowerCase() === 'textarea') {
+            e.preventDefault();
+            let el = e.target;
+            let start = el.selectionStart, end = el.selectionEnd;
+            el.value = el.value.substring(0, start) + "\n" + el.value.substring(end);
+            el.selectionStart = el.selectionEnd = start + 1;
+            el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
+            updateTaskField(eventId, taskId, fieldName, el.value);
+          }
+        } else {
+          e.preventDefault();
+          updateTaskField(eventId, taskId, fieldName, e.target.value);
+          createNewEmptyTask(eventId, taskId);
+        }
+      } else if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
+        convertToSubtask(eventId, taskId);
+      }
+    }
+ 
+    function handleSubtaskKeydown(e, eventId, taskId, subIdx) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        updateSubtaskByPath(eventId, taskId, [subIdx], e.target.value);
+        let subtasks = state.tasks[eventId][taskId].subtasks || [];
+        let parentDate = state.tasks[eventId][taskId].dueDate || "No Date";
+        subtasks.splice(subIdx + 1, 0, { text: "", complete: false, dueDate: parentDate, subtasks: [] });
+        state.tasks[eventId][taskId].subtasks = subtasks;
+        focusAfterRender = `subtask-${eventId}-${taskId}-${subIdx + 1}`;
+        renderApp();
+        if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', subtasks);
+      }
+    }
+ 
+    function createNewEmptyTask(eventId, afterTaskId) {
+      let uniqueTaskId = "TSK-" + (new Date().getTime() + 1);
+      let inheritedDate = "No Date";
+      if (afterTaskId && state.tasks[eventId] && state.tasks[eventId][afterTaskId]) {
+        inheritedDate = state.tasks[eventId][afterTaskId].dueDate || "No Date";
+      }
+      let newTask = { text: "", dueDate: inheritedDate, complete: false, details: "", assignee: "", setupText: "", subtasks: [] };
+      if (!state.tasks[eventId]) state.tasks[eventId] = {};
+      state.tasks[eventId][uniqueTaskId] = newTask;
+      focusAfterRender = `title-${eventId}-${uniqueTaskId}`;
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.saveSpecificTaskAsync(eventId, uniqueTaskId, newTask);
+    }
+ 
+    function addSubtask(eventId, taskId) {
+      if (!state.tasks[eventId] || !state.tasks[eventId][taskId]) return;
+      let subtasks = state.tasks[eventId][taskId].subtasks || [];
+      let parentDate = state.tasks[eventId][taskId].dueDate || "No Date";
+      subtasks.push({ text: "", complete: false, dueDate: parentDate, subtasks: [] });
+      state.tasks[eventId][taskId].subtasks = subtasks;
+      let newSubIdx = subtasks.length - 1;
+      focusAfterRender = `subtask-${eventId}-${taskId}-${newSubIdx}`;
+      renderApp();
+      if (typeof google !== 'undefined') google.script.run.updateTaskFieldAsync(eventId, taskId, 'subtasks', subtasks);
+    }
+ 
+    function convertToSubtask(eventId, taskId) {
+      let eventTasks = state.tasks[eventId];
+      let sortedTaskIds = Object.keys(eventTasks).sort((a, b) => {
+        let dateA = getSafeDate(eventTasks[a].dueDate) ? getSafeDate(eventTasks[a].dueDate).getTime() : 9999999999999;
+        let dateB = getSafeDate(eventTasks[b].dueDate) ? getSafeDate(eventTasks[b].dueDate).getTime() : 9999999999999;
+        return dateA - dateB;
+      });
+      let currentIndex = sortedTaskIds.indexOf(taskId);
+      if (currentIndex > 0) {
+        let parentTaskId = sortedTaskIds[currentIndex - 1];
+        let currentTask = eventTasks[taskId];
+        if (!eventTasks[parentTaskId].subtasks) eventTasks[parentTaskId].subtasks = [];
+        let subIdx = eventTasks[parentTaskId].subtasks.length;
+        eventTasks[parentTaskId].subtasks.push({ text: currentTask.text, complete: currentTask.complete, dueDate: currentTask.dueDate || "No Date" });
+        delete eventTasks[taskId];
+        focusAfterRender = `subtask-${eventId}-${parentTaskId}-${subIdx}`;
+        renderApp();
+        if (typeof google !== 'undefined') {
+          google.script.run.deleteSpecificTaskAsync(eventId, taskId);
+          google.script.run.updateTaskFieldAsync(eventId, parentTaskId, 'subtasks', eventTasks[parentTaskId].subtasks);
+        }
+      }
+    }
+ 
+    function handleManualAddBoxEnter(event, eventId) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        let txt = document.getElementById(`txt-${eventId}`).value.trim();
+        if (!txt) return;
+        let uniqueTaskId = "TSK-" + new Date().getTime();
+        let newTask = { text: txt, dueDate: "No Date", complete: false, details: "", assignee: "", setupText: "", subtasks: [] };
+        state.tasks[eventId][uniqueTaskId] = newTask;
+        focusAfterRender = `txt-${eventId}`; 
+        renderApp();
+        if (typeof google !== 'undefined') google.script.run.saveSpecificTaskAsync(eventId, uniqueTaskId, newTask);
+      }
+    }
+ 
+    function generateLocationContainerMarkup(prefix, locName, savedData) {
+      let data = savedData || { startTime: "", endTime: "", periods: [] };
+      let isChecked = !!savedData;
+      let periodsHtml = "";
+      for (let p = 1; p <= 9; p++) {
+        let active = data.periods && data.periods.includes(p);
+        periodsHtml += `
+          <label class="period-pill" style="display: inline-flex; align-items: center; gap: 2px; font-size: 10px; background: ${active ? '#e8f0fe' : '#f1f3f4'}; color: ${active ? '#1a73e8' : '#5f6368'}; border: 1px solid ${active ? '#1a73e8' : '#cbd5e1'}; padding: 1px 4px; border-radius: 4px; cursor: pointer;">
+            <input type="checkbox" class="${prefix}-p-cb" value="${p}" ${active ? 'checked' : ''} onchange="this.parentElement.style.background = this.checked ? '#e8f0fe' : '#f1f3f4'; this.parentElement.style.color = this.checked ? '#1a73e8' : '#5f6368'; this.parentElement.style.borderColor = this.checked ? '#1a73e8' : '#cbd5e1';" style="margin:0; scale:0.8; display: none;"> ${p}
+          </label>
+        `;
+      }
+      return `
+        <div class="location-wrapper" data-loc="${locName}">
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+            <input type="checkbox" class="${prefix}-loc-cb" value="${locName}" ${isChecked ? 'checked' : ''} style="scale: 1.1; cursor: pointer;">
+            <input type="text" class="borderless-input" value="${locName}" readonly style="font-size: 13px; font-weight: 500; color: #202124; background: #f8f9fa; padding: 4px 8px; border-radius: 4px; border: 1px solid #dadce0; flex-grow: 1;">
+          </div>
+          <div class="location-meta-row">
+            <div class="time-widget-group">
+              <label class="start">Start:</label>
+              <input type="time" class="${prefix}-start-time" value="${data.startTime || ''}">
+            </div>
+            <div class="time-widget-group">
+              <label class="finish">End:</label>
+              <input type="time" class="${prefix}-end-time" value="${data.endTime || ''}">
+            </div>
+          </div>
+          <div class="periods-cluster">
+            <span style="font-size: 10px; font-weight: 500; color: #5f6368;">Periods:</span>
+            <div class="period-pill-container">${periodsHtml}</div>
+          </div>
+        </div>
+      `;
+    }
+ 
+    function extractConfiguredLocations(prefix) {
+      let results = [];
+      document.querySelectorAll(`.${prefix}-loc-cb:checked`).forEach(cb => {
+        let wrapper = cb.closest('.location-wrapper');
+        let locName = cb.value;
+        let startTime = wrapper.querySelector(`.${prefix}-start-time`).value;
+        let endTime = wrapper.querySelector(`.${prefix}-end-time`).value;
+        let periods = [];
+        wrapper.querySelectorAll(`.${prefix}-p-cb:checked`).forEach(pcb => { periods.push(parseInt(pcb.value)); });
+        results.push({ name: locName, startTime: startTime, endTime: endTime, periods: periods });
+      });
+      return results;
+    }
+ 
+    /* =====================================================================
+       TEMPLATE & EVENT FORM SCREENS
+    ===================================================================== */
+ 
+    function showTemplateWorkspace() {
+      let tKeys = Object.keys(state.templates || {});
+      let templatesListHtml = "";
+      if (tKeys.length === 0) {
+        templatesListHtml = `<div style="text-align:center; padding:20px; color:#5f6368; font-size:13px; border:1px dashed #cbd5e1; border-radius:6px; background:#f8f9fa;">No templates saved yet. Create one below!</div>`;
+      } else {
+        tKeys.forEach(tId => {
+          let tmpl = state.templates[tId];
+          let taskCount = tmpl.tasks ? tmpl.tasks.length : 0;
+          let locCount = tmpl.locations ? tmpl.locations.length : 0;
+          templatesListHtml += `
+            <div class="template-item-card">
+              <div>
+                <div class="template-card-title">${tmpl.name}</div>
+                <div class="template-card-meta"><i class="fas fa-list-check"></i> ${taskCount} Predefined Tasks | <i class="fas fa-location-dot"></i> ${locCount} Locations</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size:12px;" onclick="editTemplateScreen('${tId}')"><i class="far fa-edit"></i> Edit Template</button>
+                <button class="btn btn-danger" style="padding: 4px 8px; font-size:12px;" onclick="deleteTemplate('${tId}')"><i class="far fa-trash-can"></i></button>
+              </div>
+            </div>
+          `;
+        });
+      }
+ 
+      let quickTasksHtml = state.globalQuickTasks.map((qt, index) => `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; border: 1px solid #dadce0; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+          <span>${qt}</span>
+          <div class="subtask-delete-btn" style="opacity:1;" onclick="deleteGlobalQuickTask(${index})" title="Delete Quick Auto-Task"><i class="far fa-trash-can"></i></div>
+        </div>
+      `).join('');
+ 
+      document.getElementById('app').innerHTML = `
+        <div class="header">
+          <h2><i class="fas fa-layer-group"></i> Master Templates & System Repository</h2>
+          <button class="btn btn-secondary" onclick="renderApp()">Back to Matrix</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:12px;">
+            <h3 style="margin:0 0 4px 0; font-size:14px; font-family:'Google Sans'; color:#202124;"><i class="fas fa-bolt" style="color: #f39c12;"></i> Manage Global Quick Auto-Tasks</h3>
+            <p style="margin: 0 0 10px 0; font-size:11px; color:#5f6368;">These boilerplates appear as checkboxes on the new event wizard.</p>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:6px; margin-bottom:10px;">
+              ${quickTasksHtml}
+            </div>
+            <div class="add-task-box" style="border-style: solid; border-color: #cbd5e1;">
+              <div class="task-checkbox"><i class="fas fa-plus" style="font-size: 11px; color: #1a73e8;"></i></div>
+              <input type="text" id="new-global-quicktask" class="borderless-input" style="font-size:12px;" placeholder="Add a new quick auto-task..." onkeydown="if(event.key==='Enter') addGlobalQuickTask()">
+            </div>
+          </div>
+          <div style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:12px;">
+            <h3 style="margin:0 0 10px 0; font-size:14px; font-family:'Google Sans'; color:#202124;">Existing Configuration Templates</h3>
+            ${templatesListHtml}
+          </div>
+          <div style="background:#fff; border:1px dashed #1a73e8; border-radius:6px; padding:12px;">
+            <h3 style="margin:0 0 10px 0; font-size:14px; font-family:'Google Sans'; color:#1a73e8;">Create New Template Configuration</h3>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="new-template-name" class="borderless-input" style="background:#f8f9fa; padding:8px; border-radius:4px; border:1px solid #e2e8f0; font-size:13px;" placeholder="e.g., Annual Sports Meet Master Template...">
+              <button class="btn" onclick="submitNewTemplate()">Instantiate Template</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+ 
+    function addGlobalQuickTask() {
+      let input = document.getElementById('new-global-quicktask');
+      let val = input.value.trim();
+      if (!val) return;
+      state.globalQuickTasks.push(val);
+      input.value = "";
+      if (typeof google !== 'undefined' && google.script && google.script.run.updateGlobalQuickTasksAsync) {
+        google.script.run.withSuccessHandler(() => { showTemplateWorkspace(); }).updateGlobalQuickTasksAsync(state.globalQuickTasks);
+      } else { showTemplateWorkspace(); }
+    }
+ 
+    function deleteGlobalQuickTask(index) {
+      if (confirm("Remove this quick auto-task?")) {
+        state.globalQuickTasks.splice(index, 1);
+        if (typeof google !== 'undefined' && google.script && google.script.run.updateGlobalQuickTasksAsync) {
+          google.script.run.withSuccessHandler(() => { showTemplateWorkspace(); }).updateGlobalQuickTasksAsync(state.globalQuickTasks);
+        } else { showTemplateWorkspace(); }
+      }
+    }
+ 
+    function submitNewTemplate() {
+      let name = document.getElementById('new-template-name').value.trim();
+      if (!name) { alert("Please provide a name for this template."); return; }
+      let tId = "TMP-" + new Date().getTime();
+      let newTmpl = { name: name, tasks: [], locations: [], assignees: "" };
+      if (!state.templates) state.templates = {};
+      state.templates[tId] = newTmpl;
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(() => { editTemplateScreen(tId); }).updateTemplateStorageAsync(state.templates);
+      } else { editTemplateScreen(tId); }
+    }
+
+    // =========================================================
+    // TEMPLATE EDITOR -- tasks now support subtasks
+    // =========================================================
+
+    function editTemplateScreen(tId) {
+      let tmpl = state.templates[tId];
+      if (!tmpl) return;
+
+      let locHtml = LOCATIONS.map(loc => {
+        let savedLoc = tmpl.locations ? tmpl.locations.find(l => {
+          let n = typeof l === 'object' ? l.name : l;
+          return n === loc;
+        }) : null;
+        let structuredData = null;
+        if (savedLoc) structuredData = typeof savedLoc === 'object' ? savedLoc : { name: loc, startTime: "", endTime: "", periods: [] };
+        return generateLocationContainerMarkup('tmpl', loc, structuredData);
+      }).join('');
+
+      document.getElementById('app').innerHTML = `
+        <div class="header">
+          <h2><i class="far fa-edit"></i> Editing Blueprint: ${tmpl.name}</h2>
+          <button class="btn" onclick="showTemplateWorkspace()">Save & Close View</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:14px; background:#fff; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">
+          <div>
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Template Name</div>
+            <input type="text" id="tmpl-rename" class="borderless-input" style="font-size: 14px; font-weight:500; background:#f8f9fa; padding:6px; border-radius:4px; border:1px solid #e2e8f0;" value="${tmpl.name}" onchange="state.templates['${tId}'].name = this.value; saveTemplateMetadata('${tId}')">
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Default Pre-assigned Emails</div>
+            <input type="text" id="tmpl-assignees" class="borderless-input" style="font-size: 13px; background: #f8f9fa; padding: 6px; border-radius: 4px; border: 1px solid #e2e8f0;" placeholder="emails separated by commas..." value="${tmpl.assignees || ''}" onchange="state.templates['${tId}'].assignees = this.value; saveTemplateMetadata('${tId}')">
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Preloaded Locations</div>
+            <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto;">
+              ${locHtml}
+            </div>
+          </div>
+          <div style="border-top:1px solid #e2e8f0; padding-top:10px;">
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 6px;">
+              Tasks &amp; Subtasks
+              <span style="font-size:11px; color:#5f6368; font-weight:400; margin-left:6px;">-- click <i class="fas fa-plus" style="color:#1a73e8;"></i> beside a task to add a subtask</span>
+            </div>
+            <div id="tmpl-tasks-container">
+              ${_renderTemplateTasks(tId, tmpl.tasks || [])}
+            </div>
+            <div class="add-task-box" style="margin-top:8px;">
+              <div class="task-checkbox"><i class="fas fa-plus" style="font-size: 11px; color: #1a73e8;"></i></div>
+              <input type="text" class="borderless-input task-title-input" placeholder="Type a task and press Enter..." onkeydown="handleTemplateTaskInputEnter(event, '${tId}')">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Renders all tasks + their subtasks for the template editor.
+    // Task objects: { name: string, subtasks: string[] }
+    // Legacy plain strings are handled transparently.
+    function _renderTemplateTasks(tId, tasks) {
+      if (!tasks || tasks.length === 0) {
+        return `<div style="font-size:12px; color:#5f6368; padding:8px; text-align:center;">No tasks yet. Type below to add.</div>`;
+      }
+      return tasks.map(function(taskObj, idx) {
+        let taskName = typeof taskObj === 'object' && taskObj !== null
+          ? (taskObj.name || "")
+          : String(taskObj || "");
+        let subtasks = (typeof taskObj === 'object' && taskObj !== null && Array.isArray(taskObj.subtasks))
+          ? taskObj.subtasks
+          : [];
+
+        let subtasksHtml = subtasks.map(function(st, sIdx) {
+          let stText = typeof st === 'string' ? st : (st && st.name ? st.name : "");
+          return `
+            <div style="display:flex; align-items:center; gap:6px; margin:2px 0 2px 28px; padding-left:8px; border-left:2px solid #e2e8f0;">
+              <i class="fa-regular fa-circle" style="color:#cbd5e1; font-size:11px; flex-shrink:0;"></i>
+              <input type="text" class="inline-edit task-title-input"
+                style="font-size:12px; color:#5f6368; font-weight:400;"
+                value="${stText.replace(/"/g,'&quot;')}"
+                placeholder="Subtask..."
+                onchange="updateTemplateSubtaskText('${tId}', ${idx}, ${sIdx}, this.value)"
+                onkeydown="handleTemplateSubtaskKeydown(event, '${tId}', ${idx}, ${sIdx})">
+              <div onclick="deleteTemplateSubtask('${tId}', ${idx}, ${sIdx})"
+                title="Remove subtask"
+                style="cursor:pointer; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#5f6368; font-size:10px; flex-shrink:0;"
+                onmouseover="this.style.background='#fce8e6'; this.style.color='#d93025';"
+                onmouseout="this.style.background='transparent'; this.style.color='#5f6368';">
+                <i class="far fa-trash-can"></i>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div style="margin-bottom:4px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <i class="fa-regular fa-circle" style="color:#cbd5e1; font-size:13px; flex-shrink:0;"></i>
+              <input type="text" class="inline-edit task-title-input"
+                style="font-size:13px;"
+                value="${taskName.replace(/"/g,'&quot;')}"
+                placeholder="Task name..."
+                onchange="updateTemplateTaskText('${tId}', ${idx}, this.value)"
+                onkeydown="handleTemplateTaskKeydown(event, '${tId}', ${idx})">
+              <div onclick="addTemplateSubtask('${tId}', ${idx})"
+                title="Add subtask"
+                style="cursor:pointer; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#1a73e8; font-size:11px; flex-shrink:0;"
+                onmouseover="this.style.background='#e8f0fe';"
+                onmouseout="this.style.background='transparent';">
+                <i class="fas fa-plus"></i>
+              </div>
+              <div onclick="deleteTemplateTask('${tId}', ${idx})"
+                title="Remove task"
+                style="cursor:pointer; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#5f6368; font-size:10px; flex-shrink:0;"
+                onmouseover="this.style.background='#fce8e6'; this.style.color='#d93025';"
+                onmouseout="this.style.background='transparent'; this.style.color='#5f6368';">
+                <i class="far fa-trash-can"></i>
+              </div>
+            </div>
+            ${subtasksHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Ensure a template task is stored as an object with a subtasks array.
+    function _ensureTemplateTaskObj(tId, idx) {
+      let tasks = state.templates[tId].tasks;
+      if (typeof tasks[idx] === 'string' || tasks[idx] === null || tasks[idx] === undefined) {
+        tasks[idx] = { name: String(tasks[idx] || ""), subtasks: [] };
+      } else if (!Array.isArray(tasks[idx].subtasks)) {
+        tasks[idx].subtasks = [];
+      }
+      return tasks[idx];
+    }
+
+    function handleTemplateTaskInputEnter(e, tId) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        let val = e.target.value.trim();
+        if (!val) return;
+        if (!state.templates[tId].tasks) state.templates[tId].tasks = [];
+        state.templates[tId].tasks.push({ name: val, subtasks: [] });
+        e.target.value = "";
+        saveTemplateMetadata(tId);
+        editTemplateScreen(tId);
+      }
+    }
+
+    // Enter on an existing task name field -> save + insert new task below it
+    function handleTemplateTaskKeydown(e, tId, idx) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      updateTemplateTaskText(tId, idx, e.target.value);
+      if (!state.templates[tId].tasks) state.templates[tId].tasks = [];
+      state.templates[tId].tasks.splice(idx + 1, 0, { name: "", subtasks: [] });
+      saveTemplateMetadata(tId);
+      editTemplateScreen(tId);
+      // Focus the new task's input after re-render
+      setTimeout(function() {
+        let inputs = document.querySelectorAll('#tmpl-tasks-container .task-title-input');
+        if (inputs[idx + 1]) inputs[idx + 1].focus();
+      }, 0);
+    }
+
+    // Enter on a subtask field -> save + insert new subtask below it
+    function handleTemplateSubtaskKeydown(e, tId, taskIdx, subIdx) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      updateTemplateSubtaskText(tId, taskIdx, subIdx, e.target.value);
+      let t = _ensureTemplateTaskObj(tId, taskIdx);
+      t.subtasks.splice(subIdx + 1, 0, "");
+      saveTemplateMetadata(tId);
+      editTemplateScreen(tId);
+      // Focus the new subtask's input after re-render -- count all inputs in the container
+      // and pick the one at the right position
+      setTimeout(function() {
+        let inputs = document.querySelectorAll('#tmpl-tasks-container input[type="text"]');
+        // Find the subtask input that was just inserted by scanning for blank ones after position
+        // Simpler: refocus by traversal -- each task has 1 task input + N subtask inputs
+        let tasks = state.templates[tId].tasks;
+        let inputIdx = 0;
+        for (let i = 0; i < taskIdx; i++) {
+          inputIdx++; // task name input
+          let subs = (typeof tasks[i] === 'object' && tasks[i] !== null && Array.isArray(tasks[i].subtasks)) ? tasks[i].subtasks.length : 0;
+          inputIdx += subs;
+        }
+        inputIdx++; // this task's name input
+        inputIdx += (subIdx + 1); // the new subtask
+        if (inputs[inputIdx]) inputs[inputIdx].focus();
+      }, 0);
+    }
+
+    function updateTemplateTaskText(tId, idx, val) {
+      _ensureTemplateTaskObj(tId, idx).name = val.trim();
+      saveTemplateMetadata(tId);
+    }
+
+    function deleteTemplateTask(tId, idx) {
+      state.templates[tId].tasks.splice(idx, 1);
+      saveTemplateMetadata(tId);
+      editTemplateScreen(tId);
+    }
+
+    function addTemplateSubtask(tId, taskIdx) {
+      _ensureTemplateTaskObj(tId, taskIdx).subtasks.push("");
+      saveTemplateMetadata(tId);
+      editTemplateScreen(tId);
+    }
+
+    function updateTemplateSubtaskText(tId, taskIdx, subIdx, val) {
+      _ensureTemplateTaskObj(tId, taskIdx).subtasks[subIdx] = val.trim();
+      saveTemplateMetadata(tId);
+    }
+
+    function deleteTemplateSubtask(tId, taskIdx, subIdx) {
+      _ensureTemplateTaskObj(tId, taskIdx).subtasks.splice(subIdx, 1);
+      saveTemplateMetadata(tId);
+      editTemplateScreen(tId);
+    }
+
+    function saveTemplateMetadata(tId) {
+      state.templates[tId].locations = extractConfiguredLocations('tmpl');
+      if (typeof google !== 'undefined' && google.script && google.script.run.updateTemplateStorageAsync) {
+        google.script.run.updateTemplateStorageAsync(state.templates);
+      }
+    }
+
+    function deleteTemplate(tId) {
+      if (confirm("Permanently destroy this blueprint template?")) {
+        delete state.templates[tId];
+        if (typeof google !== 'undefined' && google.script && google.script.run.updateTemplateStorageAsync) {
+          google.script.run.updateTemplateStorageAsync(state.templates);
+        }
+        showTemplateWorkspace();
+      }
+    }
+ 
+    function handleFormAssigneeChange() {
+      let checkedValues = [];
+      document.querySelectorAll('#evt-emails-menu input[type="checkbox"]:checked').forEach(cb => checkedValues.push(cb.value));
+      document.getElementById('evt-emails-hidden-input').value = checkedValues.join(', ');
+    }
+ 
+    function showEventForm() {
+      let locHtml = LOCATIONS.map(loc => generateLocationContainerMarkup('evt', loc, null)).join('');
+      let tmplOptions = `<option value="">-- No Template Blueprint (Clean List) --</option>`;
+      Object.keys(state.templates || {}).forEach(tId => {
+        tmplOptions += `<option value="${tId}">${state.templates[tId].name}</option>`;
+      });
+      let multiselectDropdownHTML = generateAssigneeDropdownHTML('evt-emails-menu', '', 'handleFormAssigneeChange()');
+      let quickCheckboxesHtml = state.globalQuickTasks.map(qt => `
+        <label style="cursor:pointer; font-size: 13px;"><input type="checkbox" class="quick-add-cb" value="${qt}"> ${qt}</label>
+      `).join('');
+ 
+      document.getElementById('app').innerHTML = `
+        <div class="header"><h2><i class="fas fa-folder-plus"></i> Create New Matrix Event</h2></div>
+        <div class="add-task-box" style="flex-direction: column; gap: 12px; background: #ffffff; padding: 12px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Load Saved System Blueprint Template</div>
+            <select id="evt-blueprint-selection" class="btn btn-secondary" style="width:100%; text-align:left;" onchange="applyTemplateToFormLayout(this.value)">
+              ${tmplOptions}
+            </select>
+          </div>
+          <input type="text" id="evt-name" class="borderless-input" style="font-size: 16px; font-weight: 500; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;" placeholder="Event List Name...">
+          <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; white-space:nowrap;">Category:</div>
+            <select id="evt-category" class="btn btn-secondary event-type-select" style="font-size:12px; padding:4px 8px;">
+              <option value="programming">Prog</option>
+              <option value="academic">Acad</option>
+              <option value="personal">Personal</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 12px; width: 100%;">
+            <div style="flex-grow: 1;">
+              <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Target Due Date</div>
+              <input type="date" id="evt-date" class="clean-date-input" style="background: #f8f9fa; width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 4px; height: auto; font-size: 13px;">
+            </div>
+            <div style="flex-grow: 2; position: relative;">
+              <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Assignees Selection</div>
+              <input type="hidden" id="evt-emails-hidden-input" value="">
+              <div style="background: #f8f9fa; padding: 5px; border-radius: 4px; border: 1px solid #e2e8f0; display: inline-block; width: 100%; box-sizing: border-box;">
+                ${multiselectDropdownHTML}
+              </div>
+            </div>
+          </div>
+          <div style="width: 100%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <div style="font-size: 12px; font-weight: 500; color: #5f6368;">Quick Auto-Tasks</div>
+              <button class="btn btn-secondary" style="padding: 2px 6px; font-size:10px;" onclick="showTemplateWorkspace()"><i class="fas fa-cog"></i> Adjust Presets</button>
+            </div>
+            <div style="background: #f8f9fa; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 12px;">
+              ${quickCheckboxesHtml}
+            </div>
+          </div>
+          <div style="width: 100%;">
+            <div style="font-size: 12px; font-weight: 500; color: #5f6368; margin-bottom: 4px;">Assigned Locations</div>
+            <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto;">
+              ${locHtml}
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; width: 100%; margin-top: 4px;">
+            <button class="btn" style="flex-grow: 1;" onclick="submitEventWithDetails()">Create Matrix Event</button>
+            <button class="btn" style="background:#e2e8f0; color:#202124;" onclick="renderApp()">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+ 
+    function applyTemplateToFormLayout(tId) {
+      let tmpl = state.templates[tId];
+      if (!tmpl) return;
+      document.getElementById('evt-name').value = tmpl.name + " (" + new Date().getFullYear() + ")";
+      let emailsStr = tmpl.assignees || "";
+      document.getElementById('evt-emails-hidden-input').value = emailsStr;
+      let activeEmails = emailsStr.split(',').map(s => s.trim());
+      let menu = document.getElementById('evt-emails-menu');
+      if (menu) {
+        menu.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = activeEmails.includes(cb.value); });
+      }
+      document.querySelectorAll('.evt-loc-cb').forEach(cb => {
+        cb.checked = false;
+        let wrapper = cb.closest('.location-wrapper');
+        if (wrapper) {
+          wrapper.querySelector('.evt-start-time').value = "";
+          wrapper.querySelector('.evt-end-time').value = "";
+          wrapper.querySelectorAll('.evt-p-cb').forEach(pBox => {
+            pBox.checked = false;
+            pBox.parentElement.style.background = '#f1f3f4';
+            pBox.parentElement.style.color = '#5f6368';
+            pBox.parentElement.style.borderColor = '#cbd5e1';
+          });
+        }
+      });
+      if (tmpl.locations && Array.isArray(tmpl.locations)) {
+        tmpl.locations.forEach(lObj => {
+          let name = typeof lObj === 'object' && lObj !== null ? lObj.name : lObj;
+          let cb = document.querySelector(`.evt-loc-cb[value="${name}"]`);
+          if (cb) {
+            cb.checked = true;
+            let wrapper = cb.closest('.location-wrapper');
+            if (wrapper && typeof lObj === 'object' && lObj !== null) {
+              wrapper.querySelector('.evt-start-time').value = lObj.startTime || "";
+              wrapper.querySelector('.evt-end-time').value = lObj.endTime || "";
+              if (lObj.periods) {
+                wrapper.querySelectorAll('.evt-p-cb').forEach(pBox => {
+                  let isIncluded = lObj.periods.includes(parseInt(pBox.value));
+                  pBox.checked = isIncluded;
+                  pBox.parentElement.style.background = isIncluded ? '#e8f0fe' : '#f1f3f4';
+                  pBox.parentElement.style.color = isIncluded ? '#1a73e8' : '#5f6368';
+                  pBox.parentElement.style.borderColor = isIncluded ? '#1a73e8' : '#cbd5e1';
+                });
+              }
+            }
+          }
+        });
+      }
+    }
+ 
+    function submitEventWithDetails() {
+      let name = document.getElementById('evt-name').value.trim();
+      if (!name) { alert("An Event List Name is required."); return; }
+      let evtCategory = (document.getElementById('evt-category') || {}).value || 'programming';
+      let dateVal = document.getElementById('evt-date').value;
+      let eventDate = dateVal ? new Date(dateVal + 'T00:00:00').toISOString() : "No Date";
+      let emails = document.getElementById('evt-emails-hidden-input').value.trim();
+      let quickTasks = [];
+      document.querySelectorAll('.quick-add-cb:checked').forEach(cb => quickTasks.push(cb.value));
+      let blueprintId = document.getElementById('evt-blueprint-selection').value;
+      if (blueprintId && state.templates[blueprintId] && state.templates[blueprintId].tasks) {
+        // When spawning from a template, flatten tasks+subtasks into the task list.
+        // Template tasks with subtasks become a parent task followed by subtask objects.
+        state.templates[blueprintId].tasks.forEach(function(t) {
+          if (typeof t === 'string') {
+            quickTasks.push(t);
+          } else if (t && t.name) {
+            quickTasks.push(t);  // pass the full object; backend handles subtask array
+          }
+        });
+      }
+      let locations = extractConfiguredLocations('evt');
+      document.getElementById('app').innerHTML = `<div class="loader"><i class="fas fa-circle-notch fa-spin"></i> Instantiating Assets...</div>`;
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(res => { 
+          state = res; 
+          if (!state.templates) state.templates = {};
+          let newEventId = res.eventOrder[res.eventOrder.length - 1];
+          if (newEventId && evtCategory && evtCategory !== 'programming') {
+            if (state.events[newEventId]) state.events[newEventId].eventType = evtCategory;
+            google.script.run.updateEventTypeAsync(newEventId, evtCategory);
+          }
+          // Auto-assign Josh for academic and personal events
+          if (newEventId && (evtCategory === 'academic' || evtCategory === 'personal')) {
+            _autoAssignJosh(newEventId);
+          }
+          sortEventsChronologically();
+          renderApp(); 
+        }).saveEventWithDetailsAsync(name, eventDate, emails, locations, quickTasks);
+      } else {
+        sortEventsChronologically();
+        renderApp();
+      }
+    }
+
+    function permanentDeleteEvent(targetElement) {
+      let eventId = targetElement?.getAttribute?.('data-delete-id') || targetElement;
+      if (!eventId) return;
+      if (!confirm("WARNING: This will permanently delete this event and all of its tasks. This action cannot be undone. Proceed?")) return;
+      if (state.events && state.events[eventId]) {
+        delete state.events[eventId];
+        state.eventOrder = state.eventOrder.filter(id => id !== eventId);
+        renderApp();
+      }
+      if (typeof google !== 'undefined' && google.script?.run) {
+        google.script.run
+          .withFailureHandler(function(err) { alert("Permanent deletion failed on server: " + err.message); })
+          .withSuccessHandler(function(fullDataBundle) { state = fullDataBundle; renderApp(); })
+          .hardDeleteEventPermanentlyAsync(eventId);
+      }
+    }
+
+    /* =====================================================================
+       IMPORTANT LINKS PAGE
+    ===================================================================== */
+
+    let linksDragIdx = null;
+    let linkEditingTask = null; // eventId__taskId of task whose link editor is open
+
+    function showLinksPage() {
+      // Ensure links are loaded
+      if (!state.links) state.links = [];
+      _renderLinksPage();
+    }
+
+    function _renderLinksPage() {
+      const links = state.links;
+
+      const tableRows = links.length === 0
+        ? `<tr><td colspan="3" style="text-align:center; padding:20px; color:#5f6368; font-size:13px;">No links yet. Add one below.</td></tr>`
+        : links.map((link, idx) => `
+            <tr class="link-row"
+                draggable="true"
+                ondragstart="linksDragStart(${idx})"
+                ondragover="event.preventDefault()"
+                ondrop="linksDrop(${idx})"
+                ondragend="linksDragEnd()"
+                style="border-bottom:1px solid #f1f3f4; transition: background 0.15s;"
+                onmouseover="this.style.background='#f8f9fa'"
+                onmouseout="this.style.background='white'">
+              <td style="padding:8px 6px; width:24px; cursor:grab; color:#bdc1c6; text-align:center;">
+                <i class="fas fa-grip-vertical"></i>
+              </td>
+              <td style="padding:8px 10px; font-size:13px; font-weight:500; color:#202124;">
+                <a href="${_escHtml(link.url)}" target="_blank" rel="noopener noreferrer"
+                   style="color:#1a73e8; text-decoration:none; display:flex; align-items:center; gap:6px;"
+                   onmouseover="this.style.textDecoration='underline'"
+                   onmouseout="this.style.textDecoration='none'">
+                  <i class="fas fa-external-link-alt" style="font-size:10px; color:#5f6368;"></i>
+                  ${_escHtml(link.label)}
+                </a>
+              </td>
+              <td style="padding:8px 6px; width:60px; text-align:right;">
+                <div style="display:flex; gap:4px; justify-content:flex-end;">
+                  <div onclick="editLink(${idx})" title="Edit"
+                    style="cursor:pointer; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#5f6368; font-size:12px;"
+                    onmouseover="this.style.background='#e8eaed'" onmouseout="this.style.background='transparent'">
+                    <i class="far fa-edit"></i>
+                  </div>
+                  <div onclick="deleteLink(${idx})" title="Delete"
+                    style="cursor:pointer; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#5f6368; font-size:12px;"
+                    onmouseover="this.style.background='#fce8e6'; this.style.color='#d93025'" onmouseout="this.style.background='transparent'; this.style.color='#5f6368'">
+                    <i class="far fa-trash-can"></i>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+
+      document.getElementById('app').innerHTML = `
+        <div class="header">
+          <h2><i class="fas fa-link"></i> Important Links</h2>
+          <button class="btn btn-secondary" onclick="renderApp()"><- Back to Matrix</button>
+        </div>
+
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-bottom:16px;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#f8f9fa; border-bottom:2px solid #e2e8f0;">
+                <th style="padding:8px 6px; width:24px;"></th>
+                <th style="padding:8px 10px; text-align:left; font-size:12px; font-weight:600; color:#5f6368; text-transform:uppercase; letter-spacing:0.5px;">Link</th>
+                <th style="padding:8px 6px; width:60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="links-tbody">
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background:#fff; border:1px dashed #1a73e8; border-radius:8px; padding:14px;" id="add-link-form">
+          <h3 style="margin:0 0 12px 0; font-size:14px; font-family:'Google Sans'; color:#1a73e8;">
+            <i class="fas fa-plus-circle"></i> Add New Link
+          </h3>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:160px;">
+              <div style="font-size:11px; font-weight:500; color:#5f6368; margin-bottom:4px;">Label (display name)</div>
+              <input type="text" id="new-link-label" class="borderless-input"
+                style="background:#f8f9fa; padding:7px 10px; border-radius:4px; border:1px solid #e2e8f0; font-size:13px; width:100%; box-sizing:border-box;"
+                placeholder="e.g. Google Drive"
+                onblur="autoSaveNewLinkOnBlur()">
+            </div>
+            <div style="flex:2; min-width:220px;">
+              <div style="font-size:11px; font-weight:500; color:#5f6368; margin-bottom:4px;">URL</div>
+              <input type="text" id="new-link-url" class="borderless-input"
+                style="background:#f8f9fa; padding:7px 10px; border-radius:4px; border:1px solid #e2e8f0; font-size:13px; width:100%; box-sizing:border-box;"
+                placeholder="https://..."
+                onkeydown="if(event.key==='Enter') saveNewLink()"
+                onblur="autoSaveNewLinkOnBlur()">
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn" onclick="saveNewLink()"><i class="fas fa-save"></i> Save Link</button>
+            <button class="btn btn-secondary" onclick="clearNewLinkForm()">Clear</button>
+          </div>
+        </div>
+
+        <div id="edit-link-form" style="display:none; background:#fff; border:1px solid #1a73e8; border-radius:8px; padding:14px; margin-top:12px;">
+          <h3 style="margin:0 0 12px 0; font-size:14px; font-family:'Google Sans'; color:#1a73e8;">
+            <i class="far fa-edit"></i> Edit Link
+          </h3>
+          <input type="hidden" id="edit-link-idx">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:160px;">
+              <div style="font-size:11px; font-weight:500; color:#5f6368; margin-bottom:4px;">Label</div>
+              <input type="text" id="edit-link-label" class="borderless-input"
+                style="background:#f8f9fa; padding:7px 10px; border-radius:4px; border:1px solid #e2e8f0; font-size:13px; width:100%; box-sizing:border-box;"
+                onblur="autoSaveEditLinkOnBlur()">
+            </div>
+            <div style="flex:2; min-width:220px;">
+              <div style="font-size:11px; font-weight:500; color:#5f6368; margin-bottom:4px;">URL</div>
+              <input type="text" id="edit-link-url" class="borderless-input"
+                style="background:#f8f9fa; padding:7px 10px; border-radius:4px; border:1px solid #e2e8f0; font-size:13px; width:100%; box-sizing:border-box;"
+                onkeydown="if(event.key==='Enter') saveEditLink()"
+                onblur="autoSaveEditLinkOnBlur()">
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn" onclick="saveEditLink()"><i class="fas fa-save"></i> Update Link</button>
+            <button class="btn btn-secondary" onclick="cancelEditLink()">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function _escHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function saveNewLink() {
+      const label = (document.getElementById('new-link-label').value || "").trim();
+      const url   = (document.getElementById('new-link-url').value   || "").trim();
+      if (!label) { document.getElementById('new-link-label').focus(); return; }
+      if (!url)   { document.getElementById('new-link-url').focus();   return; }
+      const fullUrl = url.match(/^https?:\/\//) ? url : 'https://' + url;
+      if (!state.links) state.links = [];
+      state.links.push({ label, url: fullUrl });
+      _persistLinks();
+      _renderLinksPage();
+    }
+
+    function clearNewLinkForm() {
+      document.getElementById('new-link-label').value = "";
+      document.getElementById('new-link-url').value = "";
+      document.getElementById('new-link-label').focus();
+    }
+
+    function editLink(idx) {
+      const link = state.links[idx];
+      if (!link) return;
+      document.getElementById('edit-link-idx').value   = idx;
+      document.getElementById('edit-link-label').value = link.label;
+      document.getElementById('edit-link-url').value   = link.url;
+      document.getElementById('edit-link-form').style.display = "block";
+      document.getElementById('add-link-form').style.display  = "none";
+      document.getElementById('edit-link-label').focus();
+    }
+
+    function saveEditLink() {
+      const idx   = parseInt(document.getElementById('edit-link-idx').value, 10);
+      const label = (document.getElementById('edit-link-label').value || "").trim();
+      const url   = (document.getElementById('edit-link-url').value   || "").trim();
+      if (!label || !url || isNaN(idx)) return;
+      const fullUrl = url.match(/^https?:\/\//) ? url : 'https://' + url;
+      state.links[idx] = { label, url: fullUrl };
+      _persistLinks();
+      _renderLinksPage();
+    }
+
+    function cancelEditLink() {
+      document.getElementById('edit-link-form').style.display = "none";
+      document.getElementById('add-link-form').style.display  = "block";
+    }
+
+    function deleteLink(idx) {
+      if (!confirm("Remove this link?")) return;
+      state.links.splice(idx, 1);
+      _persistLinks();
+      _renderLinksPage();
+    }
+
+    function _persistLinks() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.saveLinksData(state.links);
+        _lastChangeTime = Date.now();  // mark dirty so beforeunload knows
+      }
+    }
+
+    // Flush the current link form if it has unsaved data
+    function _flushLinkForms() {
+      // Flush new-link form if both fields filled
+      var newLabel = document.getElementById('new-link-label');
+      var newUrl   = document.getElementById('new-link-url');
+      if (newLabel && newUrl) {
+        var label = newLabel.value.trim();
+        var url   = newUrl.value.trim();
+        if (label && url) {
+          if (!url.match(/^https?:\/\//)) url = 'https://' + url;
+          if (!state.links) state.links = [];
+          // Only add if not already there (avoid duplicates on double-flush)
+          var alreadyExists = state.links.some(function(l) { return l.label === label && l.url === url; });
+          if (!alreadyExists) {
+            state.links.push({ label: label, url: url });
+            _persistLinks();
+          }
+        }
+      }
+      // Flush edit-link form if open
+      var editLabel = document.getElementById('edit-link-label');
+      var editUrl   = document.getElementById('edit-link-url');
+      var editIdx   = document.getElementById('edit-link-idx');
+      if (editLabel && editUrl && editIdx) {
+        var elabel = editLabel.value.trim();
+        var eurl   = editUrl.value.trim();
+        var eidx   = parseInt(editIdx.value, 10);
+        if (elabel && eurl && !isNaN(eidx) && state.links && state.links[eidx]) {
+          if (!eurl.match(/^https?:\/\//)) eurl = 'https://' + eurl;
+          state.links[eidx] = { label: elabel, url: eurl };
+          _persistLinks();
+        }
+      }
+    }
+
+    // -- Drag-and-drop for links table -----------------------------------------
+
+    function linksDragStart(idx) {
+      linksDragIdx = idx;
+    }
+
+    function linksDrop(targetIdx) {
+      if (linksDragIdx === null || linksDragIdx === targetIdx) return;
+      const moved = state.links.splice(linksDragIdx, 1)[0];
+      state.links.splice(targetIdx, 0, moved);
+      linksDragIdx = null;
+      _persistLinks();
+      _renderLinksPage();
+    }
+
+    function linksDragEnd() {
+      linksDragIdx = null;
+    }
+
+    // -- Task Link Functions ---------------------------------------------------
+
+    function openLinkEditor(eventId, taskId) {
+      linkEditingTask = eventId + '__' + taskId;
+      renderApp();
+      setTimeout(function() {
+        let el = document.getElementById('link-input-' + eventId + '-' + taskId);
+        if (el) { el.focus(); el.select(); }
+      }, 30);
+    }
+
+    function closeLinkEditor() {
+      linkEditingTask = null;
+      renderApp();
+    }
+
+    function saveLinkFromInput(eventId, taskId) {
+      let el = document.getElementById('link-input-' + eventId + '-' + taskId);
+      let url = (el ? el.value : '').trim();
+      if (url && !url.match(/^https?:\/\//)) url = 'https://' + url;
+      saveTaskLink(eventId, taskId, url);
+    }
+
+    function saveTaskLink(eventId, taskId, url) {
+      if (!state.tasks[eventId] || !state.tasks[eventId][taskId]) return;
+      state.tasks[eventId][taskId].link = url || '';
+      linkEditingTask = null;
+      renderApp();
+      if (typeof google !== 'undefined')
+        google.script.run.updateTaskFieldAsync(eventId, taskId, 'link', url || '');
+    }
+
+    function removeTaskLink(eventId, taskId) {
+      saveTaskLink(eventId, taskId, '');
+    }
+
+    function handleLinkInputKeydown(e, eventId, taskId) {
+      if (e.key === 'Enter') { e.preventDefault(); saveLinkFromInput(eventId, taskId); }
+      if (e.key === 'Escape') { e.preventDefault(); closeLinkEditor(); }
+    }
+
+    window.collapseAllAccordions = function() {
+      if (!state || !state.expandedEvents) state.expandedEvents = {};
+      Object.keys(state.expandedEvents).forEach(eventId => { state.expandedEvents[eventId] = false; });
+      renderApp();
+      if (typeof google !== 'undefined' && google.script?.run) {
+        google.script.run
+          .withFailureHandler(function(err) { console.warn("Background error syncing collapsed state:", err.message); })
+          .saveLocalData("ui_expanded_events", state.expandedEvents);
+      }
+    };
+  </script>
+</body>
+</html>
